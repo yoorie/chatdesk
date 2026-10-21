@@ -521,9 +521,6 @@ export function NodeConfigFields({
           <option value="handoff">Human handoff</option>
           <option value="create_deal">Create deal</option>
           <option value="create_appointment">Create appointment</option>
-          <option value="sync_integration">Sync integration</option>
-          <option value="send_payment_link">Send payment link</option>
-          <option value="ai_agent_reply">AI agent reply</option>
         </select>
       </label>
 
@@ -984,148 +981,6 @@ export function NodeConfigFields({
           </label>
         </div>
       )}
-
-      {actionType === 'sync_integration' && (
-        <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-          Integration
-          <select
-            className={inputClass}
-            value={config.provider || 'meta-leads'}
-            onChange={(event) => onChange('provider', event.target.value)}
-          >
-            <option value="meta-leads">Facebook ad leads</option>
-            <option value="google-sheets">Google Sheets</option>
-            <option value="google-calendar">Google Calendar</option>
-            <option value="shopify">Shopify</option>
-            <option value="woocommerce">WooCommerce</option>
-          </select>
-        </label>
-      )}
-
-      {actionType === 'send_payment_link' && (
-        <div className="grid gap-3">
-          <label className="flex items-center justify-between rounded-btn border border-gray-100 p-3 text-sm font-medium text-ui-text dark:border-ui-dark-border dark:text-ui-dark-text">
-            Create a payment link automatically
-            <input
-              type="checkbox"
-              checked={Boolean(config.create_razorpay_link)}
-              onChange={(event) => onChange('create_razorpay_link', event.target.checked)}
-              className="rounded border-gray-300 text-ui-green focus:ring-ui-green/30"
-            />
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-              Amount paise
-              <TextInput
-                className="mt-1"
-                type="number"
-                value={config.amount || 0}
-                onChange={(event) => onChange('amount', Number(event.target.value))}
-              />
-            </label>
-            <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-              Currency
-              <TextInput
-                className="mt-1"
-                value={config.currency || 'INR'}
-                onChange={(event) => onChange('currency', event.target.value.toUpperCase())}
-              />
-            </label>
-          </div>
-          {!config.create_razorpay_link && (
-            <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-              Payment URL
-              <TextInput
-                className="mt-1"
-                value={config.payment_url || ''}
-                onChange={(event) => onChange('payment_url', event.target.value)}
-              />
-            </label>
-          )}
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-            Description
-            <TextInput
-              className="mt-1"
-              value={config.description || ''}
-              onChange={(event) => onChange('description', event.target.value)}
-              placeholder="Order payment"
-            />
-          </label>
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-            Message
-            <textarea
-              className={textAreaClass}
-              rows={3}
-              value={config.message || ''}
-              onChange={(event) => onChange('message', event.target.value)}
-            />
-          </label>
-        </div>
-      )}
-
-      {actionType === 'ai_agent_reply' && (
-        <div className="grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-              AI agent
-              <select
-                className={inputClass}
-                value={config.agent_id || ''}
-                onChange={(event) => onChange('agent_id', Number(event.target.value))}
-              >
-                <option value="">Auto by role</option>
-                {(options.ai_agents || []).map((agent) => (
-                  <option key={agent.id} value={agent.id}>
-                    {agent.name} · {agent.role || 'agent'}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-              Fallback role
-              <select
-                className={inputClass}
-                value={config.agent_role || 'sales'}
-                onChange={(event) => onChange('agent_role', event.target.value)}
-              >
-                <option value="sales">Sales</option>
-                <option value="support">Support</option>
-                <option value="sales_support">Sales + support</option>
-                <option value="custom">Custom</option>
-              </select>
-            </label>
-          </div>
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-            Max reply characters
-            <TextInput
-              className="mt-1"
-              type="number"
-              min="120"
-              max="3000"
-              value={config.max_chars || 1500}
-              onChange={(event) => onChange('max_chars', Number(event.target.value))}
-            />
-          </label>
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-            Instruction
-            <textarea
-              className={textAreaClass}
-              rows={4}
-              value={config.instruction || ''}
-              onChange={(event) => onChange('instruction', event.target.value)}
-            />
-          </label>
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-            Handoff rule
-            <TextInput
-              className="mt-1"
-              value={config.handoff_rule || ''}
-              onChange={(event) => onChange('handoff_rule', event.target.value)}
-              placeholder="Handoff if customer asks for human, pricing exception, or unresolved issue"
-            />
-          </label>
-        </div>
-      )}
     </div>
   );
 }
@@ -1493,9 +1348,7 @@ function BotDetailDrawer({
                 </Card>
                 <Card className="border-transparent dark:border-slate-700/80">
                   <CardContent className="p-5">
-                    <p className="font-semibold text-ui-text dark:text-ui-dark-text">
-                      Scope
-                    </p>
+                    <p className="font-semibold text-ui-text dark:text-ui-dark-text">Scope</p>
                     <p className="mt-2 text-sm text-ui-text-muted dark:text-ui-dark-text-muted">
                       {bot.applies_to?.all_connections
                         ? 'Runs on your WhatsApp number.'

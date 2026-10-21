@@ -1,11 +1,5 @@
 import { brandName } from '../../lib/brand';
-import {
-  AuthDivider,
-  AuthField,
-  AuthInput,
-  PasswordField,
-  SocialAuthButtons,
-} from '@/Components/Auth/AuthParts';
+import { AuthField, AuthInput, PasswordField } from '@/Components/Auth/AuthParts';
 import Checkbox from '@/Components/Checkbox';
 import { Alert } from '@/Components/UI/Alert';
 import Button from '@/Components/UI/Button';
@@ -17,11 +11,11 @@ import { FormEventHandler } from 'react';
 export default function Login({
   status,
   canResetPassword,
-  googleOAuthEnabled = false,
+  canRegister = false,
 }: {
   status?: string;
   canResetPassword: boolean;
-  googleOAuthEnabled?: boolean;
+  canRegister?: boolean;
 }) {
   const demo = (usePage().props as any).demo as any;
   const { data, setData, post, processing, errors, reset } = useForm({
@@ -62,26 +56,28 @@ export default function Login({
         </Alert>
       )}
 
-      <SocialAuthButtons
-        googleEnabled={googleOAuthEnabled}
-        googleHref={googleOAuthEnabled ? route('auth.google.redirect') : undefined}
-      />
-      <AuthDivider label="Or continue with email" />
-
       {demo?.enabled && (
         <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm dark:border-emerald-900 dark:bg-emerald-950/40">
           <p className="mb-2 font-semibold text-emerald-900 dark:text-emerald-200">Demo logins</p>
           <div className="flex flex-wrap gap-2">
-            {([
-              ['admin', 'Admin'],
-              ['owner', 'Owner'],
-              ['agent', 'Agent'],
-            ] as const).map(([who, label]) => (
+            {(
+              [
+                ['admin', 'Admin'],
+                ['owner', 'Owner'],
+                ['agent', 'Agent'],
+              ] as const
+            ).map(([who, label]) => (
               <button
                 key={who}
                 type="button"
                 title={`${demo[who].email} / ${demo[who].password}`}
-                onClick={() => setData((d: any) => ({ ...d, email: demo[who].email, password: demo[who].password }))}
+                onClick={() =>
+                  setData((d: any) => ({
+                    ...d,
+                    email: demo[who].email,
+                    password: demo[who].password,
+                  }))
+                }
                 className="inline-flex w-auto items-center rounded-lg bg-[#047857] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#065f46] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
               >
                 Fill {label}
@@ -89,7 +85,8 @@ export default function Login({
             ))}
           </div>
           <p className="mt-2 break-all text-xs text-emerald-900/80 dark:text-emerald-200/80">
-            Admin: {demo.admin.email} / {demo.admin.password} · Owner: {demo.owner.email} / {demo.owner.password} · Agent: {demo.agent.email} / {demo.agent.password}
+            Owner: {demo.owner.email} / {demo.owner.password} · Agent: {demo.agent.email} /{' '}
+            {demo.agent.password}
           </p>
         </div>
       )}
@@ -145,26 +142,19 @@ export default function Login({
       </form>
 
       <div className="mt-6 text-center">
-        <p className="text-sm text-ui-text-muted">
-          Don't have an account?{' '}
-          <Link
-            href={route('register')}
-            className="font-semibold text-ui-green-dark hover:underline"
-          >
-            Sign up
-          </Link>
-        </p>
-        <p className="mt-6 text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
-          By signing in you agree to our{' '}
-          <Link href={route('terms')} className="underline">
-            Terms
-          </Link>{' '}
-          and{' '}
-          <Link href={route('privacy')} className="underline">
-            Privacy Policy
-          </Link>
-          .
-        </p>
+        {canRegister ? (
+          <p className="text-sm text-ui-text-muted">
+            First time here?{' '}
+            <Link
+              href={route('register')}
+              className="font-semibold text-ui-green-dark hover:underline"
+            >
+              Create the owner account
+            </Link>
+          </p>
+        ) : (
+          <p className="text-sm text-ui-text-muted">New teammate? Ask an admin to invite you.</p>
+        )}
       </div>
     </GuestLayout>
   );

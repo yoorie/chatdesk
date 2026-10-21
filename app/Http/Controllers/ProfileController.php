@@ -7,25 +7,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class ProfileController extends Controller
 {
     /**
      * Display the user's profile form.
      */
-    public function edit(Request $request): RedirectResponse|Response
+    public function edit(Request $request): RedirectResponse
     {
-        if ($request->user()?->isSuperAdmin()) {
-            return Inertia::render('Profile/Manage', [
-                'security' => [
-                    'sessions' => $this->sessionPayload($request),
-                    'two_factor_setup' => $this->twoFactorSetupPayload($request->user()),
-                ],
-            ]);
-        }
-
         return redirect()->route('app.settings', ['tab' => 'profile'])
             ->with('status', session('status'));
     }

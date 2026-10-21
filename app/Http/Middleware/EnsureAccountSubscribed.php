@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 use App\Core\Billing\SubscriptionService;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureAccountSubscribed
@@ -34,8 +33,6 @@ class EnsureAccountSubscribed
             ], 402);
         }
 
-        return redirect()->route('app.billing.index', ['tab' => 'plans'])
-            ->withErrors(['billing' => $message])
-            ->with('error', $message);
+        return redirect()->route('app.dashboard')->with('error', $message);
     }
 }

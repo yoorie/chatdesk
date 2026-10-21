@@ -3,12 +3,10 @@ import Button from '@/Components/UI/Button';
 import { ThemedIconTile } from '@/Components/UI/Elements';
 import { cn } from '@/lib/utils';
 import {
-  BadgeIndianRupee,
   Bot,
   CalendarPlus,
   ClipboardList,
   Clock,
-  DatabaseZap,
   GitBranch,
   Handshake,
   Image,
@@ -22,7 +20,6 @@ import {
   Save,
   Search,
   Send,
-  Sparkles,
   Tag,
   Trash2,
   UserCheck,
@@ -171,22 +168,6 @@ const nodeTypesMeta = [
     description: 'Create a demo or service appointment',
   },
   {
-    type: 'send_payment_link',
-    label: 'Payment link',
-    category: 'Commerce',
-    icon: BadgeIndianRupee,
-    tone: 'amber' as const,
-    description: 'Send a checkout or payment URL',
-  },
-  {
-    type: 'ai_agent_reply',
-    label: 'AI agent',
-    category: 'AI',
-    icon: Sparkles,
-    tone: 'purple' as const,
-    description: 'Let your AI assistant reply',
-  },
-  {
     type: 'condition',
     label: 'Condition',
     category: 'Logic',
@@ -201,14 +182,6 @@ const nodeTypesMeta = [
     icon: Clock,
     tone: 'amber' as const,
     description: 'Wait before moving to the next step',
-  },
-  {
-    type: 'sync_integration',
-    label: 'Sync integration',
-    category: 'Integrations',
-    icon: DatabaseZap,
-    tone: 'purple' as const,
-    description: 'Run Meta Leads, Sheets, Calendar, or commerce sync',
   },
   {
     type: 'webhook',
@@ -277,14 +250,6 @@ function describeNode(node: NodeItem) {
 
   if (config.action_type === 'create_appointment') {
     return config.title || 'Create appointment';
-  }
-
-  if (config.action_type === 'sync_integration') {
-    return `Sync ${String(config.provider || 'integration').replace(/-/g, ' ')}`;
-  }
-
-  if (config.action_type === 'send_payment_link') {
-    return 'Send payment link';
   }
 
   return String(config.action_type || 'action').replace(/_/g, ' ');

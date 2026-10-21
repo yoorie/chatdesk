@@ -25,7 +25,7 @@ class ContactWorkspaceIsolationTest extends TestCase
         $firstAccount->users()->attach($user->id, ['role' => 'owner']);
         $secondAccount->users()->attach($user->id, ['role' => 'owner']);
 
-        $plan = Plan::where('key', 'starter')->firstOrFail();
+        $plan = Plan::where('key', 'self-hosted')->firstOrFail();
         app(SubscriptionService::class)->changePlan($firstAccount, $plan, $user);
         app(SubscriptionService::class)->changePlan($secondAccount, $plan, $user);
 

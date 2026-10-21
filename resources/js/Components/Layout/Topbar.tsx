@@ -10,7 +10,6 @@ import {
   Bot,
   Building2,
   ChevronDown,
-  CreditCard,
   HelpCircle,
   Keyboard,
   LifeBuoy,
@@ -42,7 +41,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ user, onMenuClick }: TopbarProps) {
-  const { flash, impersonation, notification_summary, ziggy } = usePage().props as any;
+  const { flash, notification_summary, ziggy } = usePage().props as any;
   const currentRoute = usePage().url.split('?')[0];
   const currentOrigin = new URL(ziggy?.location || 'http://localhost').origin;
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -99,12 +98,6 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
       title: 'WhatsApp account',
       subtitle: 'Your WhatsApp number and business profile',
     },
-    { route: 'app.billing.index', title: 'Billing', subtitle: 'Your plan, usage, and invoices' },
-    {
-      route: 'app.workspaces.index',
-      title: 'Workspaces',
-      subtitle: 'Separate spaces for brands or clients',
-    },
     { route: 'app.settings', title: 'Settings', subtitle: 'Workspace, profile, and security' },
     { route: 'app.activity-logs', title: 'Activity log', subtitle: 'Who did what, and when' },
     {
@@ -118,24 +111,9 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
       subtitle: 'Invite people and choose what they can do',
     },
     {
-      route: 'app.modules',
-      title: 'Tools',
-      subtitle: 'QR codes, chat links, and handy utilities',
-    },
-    {
-      route: 'app.floaters',
-      title: 'Website widget',
-      subtitle: 'Add a WhatsApp chat button to your website',
-    },
-    {
       route: 'app.developer.index',
       title: 'Developer API',
       subtitle: 'API keys and event notifications for your own apps',
-    },
-    {
-      route: 'app.whatsapp-calls.index',
-      title: 'Calls',
-      subtitle: 'Take WhatsApp voice calls from customers',
     },
     {
       route: 'app.quick-replies.index',
@@ -147,7 +125,6 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
       title: 'WhatsApp forms',
       subtitle: 'Forms and interactive screens inside WhatsApp',
     },
-    { route: 'app.support.index', title: 'Support', subtitle: 'Get help from our team' },
     {
       route: 'app.contacts.tags.index',
       title: 'Tags',
@@ -158,108 +135,10 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
       title: 'Chatbots',
       subtitle: 'Automatic replies and conversation flows',
     },
-    { route: 'app.ai.index', title: 'AI assistant', subtitle: 'Let AI answer common questions' },
-    {
-      route: 'app.analytics.index',
-      title: 'Analytics',
-      subtitle: 'How your messages and campaigns perform',
-    },
-    {
-      route: 'app.integrations.index',
-      title: 'Integrations',
-      subtitle: 'Connect the tools you already use',
-    },
     {
       route: 'app.whatsapp.lists.index',
       title: 'List messages',
       subtitle: 'Menus customers can pick from',
-    },
-    {
-      route: 'app.media-library.index',
-      title: 'Media',
-      subtitle: 'Images, videos, and files for your messages',
-    },
-    {
-      route: 'app.meta-leads.index',
-      title: 'Ad leads',
-      subtitle: 'Leads from your Facebook and Instagram ads',
-    },
-    { route: 'app.appointments.index', title: 'Appointments', subtitle: 'Bookings and reminders' },
-    {
-      route: 'platform.dashboard',
-      title: 'Platform admin',
-      subtitle: 'System-wide operations and health',
-    },
-    {
-      route: 'platform.accounts.index',
-      title: 'Tenants',
-      subtitle: 'Workspace and tenant management',
-    },
-    { route: 'platform.users.index', title: 'Users', subtitle: 'Platform users and permissions' },
-    {
-      route: 'platform.plans.index',
-      title: 'Plans',
-      subtitle: 'Plan catalog, pricing, and limits',
-    },
-    {
-      route: 'platform.modules.index',
-      title: 'Modules',
-      subtitle: 'Feature modules and availability',
-    },
-    {
-      route: 'platform.subscriptions.index',
-      title: 'Subscriptions',
-      subtitle: 'Customer subscriptions and status',
-    },
-    {
-      route: 'platform.discounts.index',
-      title: 'Discounts',
-      subtitle: 'Promo and billing discount rules',
-    },
-    {
-      route: 'platform.transactions.index',
-      title: 'Transactions',
-      subtitle: 'Wallet, invoices, and payment records',
-    },
-    {
-      route: 'platform.analytics',
-      title: 'Platform analytics',
-      subtitle: 'System usage and growth metrics',
-    },
-    {
-      route: 'platform.templates.index',
-      title: 'Template library',
-      subtitle: 'Platform message template oversight',
-    },
-    {
-      route: 'platform.support.index',
-      title: 'Support inbox',
-      subtitle: 'Customer tickets and assistance',
-    },
-    {
-      route: 'platform.activity-logs',
-      title: 'Audit logs',
-      subtitle: 'System events and admin activity',
-    },
-    {
-      route: 'platform.notifications.index',
-      title: 'Notifications',
-      subtitle: 'Platform alerts and incident signals',
-    },
-    {
-      route: 'platform.system-health',
-      title: 'System health',
-      subtitle: 'Infrastructure and integration status',
-    },
-    {
-      route: 'platform.system-update',
-      title: 'System update',
-      subtitle: 'Upload a signed package',
-    },
-    {
-      route: 'platform.settings',
-      title: 'Platform settings',
-      subtitle: 'Branding, payments, support, and compliance',
     },
   ]
     .map((item) => ({ ...item, href: tryRoute(item.route) }))
@@ -275,9 +154,7 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
   const title = activeMeta?.title || (user?.is_super_admin ? 'Platform admin' : 'Workspace');
   const hideRouteTitle =
     activeMeta?.route === 'app.settings' || activeMeta?.route === 'app.whatsapp.connections.index';
-  const notificationHref = user?.is_super_admin
-    ? tryRoute('platform.notifications.index')
-    : tryRoute('app.notifications.index');
+  const notificationHref = tryRoute('app.notifications.index');
   const notificationItems = [
     flash?.success ? { tone: 'success', title: flash.success, time: 'Now' } : null,
     flash?.warning ? { tone: 'warning', title: flash.warning, time: 'Now' } : null,
@@ -308,14 +185,9 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
 
   const campaignIndexHref = tryRoute('app.broadcasts.index');
   const campaignCreateHref = campaignIndexHref ? `${campaignIndexHref}?panel=create` : null;
-  const helpHref = user?.is_super_admin
-    ? tryRoute('platform.support.index')
-    : tryRoute('app.support.index');
-  const knowledgeBaseHref =
-    tryRoute('knowledgebase') || tryRoute('marketing.knowledge-base') || '/knowledge-base';
-  const contactHref = tryRoute('contact') || tryRoute('marketing.contact') || '/contact';
-  const publicHelpHref = tryRoute('help') || tryRoute('marketing.help') || '/help';
-  const effectiveHelpHref = helpHref || publicHelpHref;
+  const effectiveHelpHref = 'https://github.com/yoorie/chatdesk/issues';
+  const knowledgeBaseHref = 'https://github.com/yoorie/chatdesk/blob/main/docs/connect-whatsapp.md';
+  const contactHref = 'https://github.com/yoorie/chatdesk';
 
   return (
     <header className="app-header relative z-[120] h-14 flex-shrink-0 border-b border-ui-border bg-white/95 px-4 backdrop-blur dark:border-ui-dark-border dark:bg-ui-dark-surface/95 sm:px-6">
@@ -485,7 +357,7 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
                       Help
                     </div>
                     <p className="mt-0.5 text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
-                      Get support without leaving your workspace.
+                      Guides and help for this open-source install.
                     </p>
                   </div>
                   <div className="py-1">
@@ -493,16 +365,16 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
                       href={effectiveHelpHref}
                       icon={<LifeBuoy className="h-4 w-4" />}
                     >
-                      Support center
+                      Report an issue
                     </TopbarMenuLink>
                     <TopbarMenuLink
                       href={knowledgeBaseHref}
                       icon={<MessageSquareText className="h-4 w-4" />}
                     >
-                      Knowledge base
+                      Connect WhatsApp guide
                     </TopbarMenuLink>
                     <TopbarMenuLink href={contactHref} icon={<MessageCircle className="h-4 w-4" />}>
-                      Contact {brandName()}
+                      {brandName()} on GitHub
                     </TopbarMenuLink>
                   </div>
                 </div>
@@ -627,11 +499,18 @@ function TopbarMenuLink({
   icon: ReactNode;
   children: ReactNode;
 }) {
+  const className =
+    'flex items-center gap-3 px-4 py-2 text-sm text-ui-text transition hover:bg-gray-50 dark:text-ui-dark-text dark:hover:bg-ui-dark-surface-2';
+  if (/^https?:\/\//.test(href)) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+        <span className="text-gray-500 dark:text-ui-dark-text-muted">{icon}</span>
+        {children}
+      </a>
+    );
+  }
   return (
-    <Link
-      href={href}
-      className="flex items-center gap-3 px-4 py-2 text-sm text-ui-text transition hover:bg-gray-50 dark:text-ui-dark-text dark:hover:bg-ui-dark-surface-2"
-    >
+    <Link href={href} className={className}>
       <span className="text-gray-500 dark:text-ui-dark-text-muted">{icon}</span>
       {children}
     </Link>

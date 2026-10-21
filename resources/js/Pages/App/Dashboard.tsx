@@ -4,7 +4,6 @@ import { friendlyStatus } from '@/lib/friendly';
 import {
   AlertTriangle,
   ArrowRight,
-  BarChart3,
   CheckCircle2,
   Circle,
   Clock,
@@ -121,7 +120,13 @@ const setupIcons: Record<string, any> = {
   send_campaign: Megaphone,
 };
 
-function SetupChecklist({ setup, accountId }: { setup: SetupProgress; accountId?: number | string }) {
+function SetupChecklist({
+  setup,
+  accountId,
+}: {
+  setup: SetupProgress;
+  accountId?: number | string;
+}) {
   const storageKey = `zyptos:setup-dismissed:${accountId ?? 'workspace'}`;
   const [dismissed, setDismissed] = useState(false);
 
@@ -278,9 +283,7 @@ function AttentionList({ items }: { items: ActionItem[] }) {
               <p className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
                 {item.title}
               </p>
-              <p className="text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
-                {item.body}
-              </p>
+              <p className="text-xs text-ui-text-muted dark:text-ui-dark-text-muted">{item.body}</p>
             </div>
             <Link
               href={item.href}
@@ -677,15 +680,7 @@ export default function Dashboard({
       icon: FileText,
       href: `${safeRoute('app.whatsapp.templates.index')}?panel=create`,
     },
-    {
-      label: 'View reports',
-      routeName: 'app.analytics.index',
-      icon: BarChart3,
-      href: safeRoute('app.analytics.index'),
-    },
-  ].filter(
-    (action) => !action.href.startsWith('#') && routeExists(navigation, action.routeName)
-  );
+  ].filter((action) => !action.href.startsWith('#') && routeExists(navigation, action.routeName));
 
   return (
     <AppShell>

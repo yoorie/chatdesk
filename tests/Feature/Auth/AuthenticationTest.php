@@ -19,6 +19,21 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
+        $this->seed([\Database\Seeders\ModuleSeeder::class, \Database\Seeders\PlanSeeder::class]);
+        $user = User::factory()->create();
+        app(\App\Services\AccountProvisioner::class)->create($user, 'Acme Support');
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('app.dashboard', absolute: false));
+    }
+
+    public function test_users_outside_the_organisation_are_signed_out(): void
+    {
         $user = User::factory()->create();
 
         $response = $this->post('/login', [
@@ -26,40 +41,8 @@ class AuthenticationTest extends TestCase
             'password' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('onboarding', absolute: false));
-    }
-
-    public function test_super_admins_redirect_to_platform_dashboard_after_login(): void
-    {
-        $user = User::factory()->create([
-            'is_platform_admin' => true,
-        ]);
-
-        $response = $this->post('/login', [
-            'email' => $user->email,
-            'password' => 'password',
-        ]);
-
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('platform.dashboard', absolute: false));
-    }
-
-    public function test_super_admins_do_not_keep_app_panel_intended_url_after_login(): void
-    {
-        $user = User::factory()->create([
-            'is_platform_admin' => true,
-        ]);
-
-        $response = $this
-            ->withSession(['url.intended' => url('/app/dashboard')])
-            ->post('/login', [
-                'email' => $user->email,
-                'password' => 'password',
-            ]);
-
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('platform.dashboard', absolute: false));
+        $this->assertGuest();
+        $response->assertRedirect(route('login', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void

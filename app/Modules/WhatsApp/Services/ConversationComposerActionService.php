@@ -5,7 +5,6 @@ namespace App\Modules\WhatsApp\Services;
 use App\Modules\WhatsApp\Http\Controllers\ConversationController;
 use App\Modules\WhatsApp\Models\WhatsAppConversation;
 use App\Modules\WhatsApp\Models\WhatsAppMessage;
-use App\Services\RazorpayPaymentLinkService;
 use Illuminate\Http\Request;
 
 class ConversationComposerActionService
@@ -62,11 +61,6 @@ class ConversationComposerActionService
     public function sendCtaUrl(Request $request, WhatsAppConversation $conversation)
     {
         return $this->legacyController->sendCtaUrl($request, $conversation);
-    }
-
-    public function sendPaymentLink(Request $request, WhatsAppConversation $conversation, RazorpayPaymentLinkService $paymentLinks)
-    {
-        return $this->legacyController->sendPaymentLink($request, $conversation, $paymentLinks);
     }
 
     public function sendContactCard(Request $request, WhatsAppConversation $conversation)

@@ -34,7 +34,6 @@ import {
   PanelRight,
   Paperclip,
   Pause,
-  Phone,
   Play,
   Plus,
   Reply,
@@ -92,7 +91,6 @@ import {
   slaClasses,
   sortMessages,
 } from './inbox/helpers';
-import { IncomingCallScreen } from './inbox/IncomingCallScreen';
 import { locationMapTiles, locationToWorldPixel, worldPixelToLocation } from './inbox/location';
 import { MessageTimeline } from './inbox/MessageTimeline';
 import {
@@ -164,7 +162,6 @@ export default function ConversationsIndex({
   ai_agents: aiAgents = [],
   filters: initialFilters = { search: '' },
   ai_available: aiAvailable = false,
-  whatsapp_calling: whatsappCalling = { enabled: false },
   recent_calls: recentCalls = [],
   selected_conversation_id: selectedConversationId = null,
   initial_thread: initialThread = null,
@@ -213,7 +210,7 @@ export default function ConversationsIndex({
   const [recentCallsState, setRecentCallsState] = useState<InboxCallRecord[]>(
     Array.isArray(recentCalls) ? recentCalls : []
   );
-  const [dismissedCallIds, setDismissedCallIds] = useState<Set<number>>(new Set());
+  const [dismissedCallIds] = useState<Set<number>>(new Set());
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'denied'
   );
@@ -976,17 +973,6 @@ export default function ConversationsIndex({
     activeTimelineMessages.filter((message) =>
       ['image', 'video', 'document', 'audio', 'sticker'].includes(message.type)
     ).length;
-  const activeCalls = activeConversation
-    ? recentCallsState.filter((call) => {
-        const callPhone = String(call.phone_number || '').replace(/\D+/g, '');
-        const contactPhone = String(activeConversation.contact.wa_id || '').replace(/\D+/g, '');
-        return (
-          callPhone === contactPhone &&
-          (!call.whatsapp_connection_id ||
-            call.whatsapp_connection_id === activeConversation.connection.id)
-        );
-      })
-    : [];
   const incomingCall = useMemo(
     () =>
       recentCallsState.find(
@@ -1010,24 +996,6 @@ export default function ConversationsIndex({
       }) ?? null
     );
   }, [conversations, incomingCall]);
-  const callingReady = Boolean(
-    whatsappCalling?.enabled &&
-    activeConversation &&
-    (activeConversation.connection.calling_enabled ||
-      whatsappCalling.calling_eligibility_status === 'eligible' ||
-      (Number(whatsappCalling.whatsapp_connection_id) === activeConversation.connection.id &&
-        whatsappCalling.calling_webhook_subscribed))
-  );
-  const incomingCallingReady = Boolean(
-    whatsappCalling?.enabled &&
-    incomingCall &&
-    (incomingCallConversation?.connection.calling_enabled ||
-      whatsappCalling.calling_eligibility_status === 'eligible' ||
-      (incomingCallConversation &&
-        Number(whatsappCalling.whatsapp_connection_id) === incomingCallConversation.connection.id &&
-        whatsappCalling.calling_webhook_subscribed) ||
-      whatsappCalling.calling_webhook_subscribed)
-  );
 
   useEffect(() => {
     if (!incomingCall || !isIncomingActionableCall(incomingCall)) return;
@@ -1862,20 +1830,6 @@ export default function ConversationsIndex({
           footer_text: interactiveDraft.footer_text.trim() || undefined,
           display_text: interactiveDraft.cta_display_text.trim() || 'Open link',
           url: interactiveDraft.cta_url.trim(),
-        };
-      } else if (interactiveMode === 'payment') {
-        endpoint = route('app.whatsapp.conversations.send-payment-link', {
-          conversation: activeConversation.id,
-        });
-        payload = {
-          amount: interactiveDraft.payment_amount,
-          currency: 'INR',
-          description: interactiveDraft.payment_description.trim() || 'WhatsApp payment request',
-          body_text: body || undefined,
-          display_text: interactiveDraft.payment_button_text.trim() || 'Pay now',
-          expire_after_days: interactiveDraft.payment_expire_after_days
-            ? Number(interactiveDraft.payment_expire_after_days)
-            : undefined,
         };
       } else {
         endpoint = route('app.whatsapp.conversations.send-contact-card', {
@@ -3425,7 +3379,6 @@ export default function ConversationsIndex({
                             ['form', 'Form'],
                             ['product', 'Product'],
                             ['link', 'Link'],
-                            ['payment', 'Payment'],
                             ['contact', 'Contact'],
                           ] as Array<[InteractiveMode, string]>
                         ).map(([mode, label]) => (
@@ -3727,57 +3680,6 @@ export default function ConversationsIndex({
                               className="rounded-btn border-gray-200 px-3 py-1.5 text-xs dark:border-ui-dark-border dark:bg-slate-800 dark:text-ui-dark-text"
                             />
                           </>
-                        )}
-                        {interactiveMode === 'payment' && (
-                          <div className="grid gap-1.5 sm:grid-cols-2">
-                            <input
-                              value={interactiveDraft.payment_amount}
-                              onChange={(event) =>
-                                setInteractiveDraft((current) => ({
-                                  ...current,
-                                  payment_amount: event.target.value,
-                                }))
-                              }
-                              placeholder="Amount in INR"
-                              inputMode="decimal"
-                              className="rounded-btn border-gray-200 px-3 py-1.5 text-xs dark:border-ui-dark-border dark:bg-slate-800 dark:text-ui-dark-text"
-                            />
-                            <input
-                              value={interactiveDraft.payment_expire_after_days}
-                              onChange={(event) =>
-                                setInteractiveDraft((current) => ({
-                                  ...current,
-                                  payment_expire_after_days: event.target.value,
-                                }))
-                              }
-                              placeholder="Expires in days"
-                              inputMode="numeric"
-                              className="rounded-btn border-gray-200 px-3 py-1.5 text-xs dark:border-ui-dark-border dark:bg-slate-800 dark:text-ui-dark-text"
-                            />
-                            <input
-                              value={interactiveDraft.payment_description}
-                              onChange={(event) =>
-                                setInteractiveDraft((current) => ({
-                                  ...current,
-                                  payment_description: event.target.value,
-                                }))
-                              }
-                              placeholder="Payment description"
-                              className="rounded-btn border-gray-200 px-3 py-1.5 text-xs dark:border-ui-dark-border dark:bg-slate-800 dark:text-ui-dark-text sm:col-span-2"
-                            />
-                            <input
-                              value={interactiveDraft.payment_button_text}
-                              onChange={(event) =>
-                                setInteractiveDraft((current) => ({
-                                  ...current,
-                                  payment_button_text: event.target.value,
-                                }))
-                              }
-                              placeholder="Button label"
-                              maxLength={20}
-                              className="rounded-btn border-gray-200 px-3 py-1.5 text-xs dark:border-ui-dark-border dark:bg-slate-800 dark:text-ui-dark-text sm:col-span-2"
-                            />
-                          </div>
                         )}
                         {interactiveMode === 'contact' && (
                           <>
@@ -4153,87 +4055,92 @@ export default function ConversationsIndex({
                       <Lock className="mr-1 inline h-3 w-3" />
                       {noteMode ? 'Note mode' : 'Add note'}
                     </button>
-                    <button
-                      type="button"
-                      onClick={handleAiSuggest}
-                      disabled={aiSuggestLoading}
-                      className="flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-purple-600 transition hover:bg-purple-50 disabled:opacity-60 dark:text-purple-300 dark:hover:bg-purple-500/10"
-                    >
-                      {aiSuggestLoading ? (
-                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-purple-300 border-t-transparent" />
-                      ) : (
-                        <Sparkles className="h-3 w-3" />
-                      )}
-                      {aiSuggestLoading
-                        ? 'Thinking'
-                        : messageDraft.trim()
-                          ? 'Regenerate'
-                          : 'AI suggest'}
-                    </button>
-                    {aiAgents.length > 0 && (
-                      <div className="relative">
+                    {canUseAiSuggest && (
+                      <>
                         <button
                           type="button"
-                          onClick={() => setAiAgentMenuOpen((open) => !open)}
-                          className="flex h-6 max-w-[180px] items-center gap-1.5 rounded-md border border-purple-100 bg-purple-50 px-2 text-[11px] font-medium text-purple-700 transition hover:border-purple-200 hover:bg-purple-100 dark:border-purple-500/20 dark:bg-purple-500/10 dark:text-purple-200 dark:hover:bg-purple-500/15"
-                          aria-haspopup="listbox"
-                          aria-expanded={aiAgentMenuOpen}
+                          onClick={handleAiSuggest}
+                          disabled={aiSuggestLoading}
+                          className="flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-purple-600 transition hover:bg-purple-50 disabled:opacity-60 dark:text-purple-300 dark:hover:bg-purple-500/10"
                         >
-                          <Sparkles className="h-3 w-3 flex-shrink-0" />
-                          <span className="min-w-0 truncate">{selectedAiAgentLabel}</span>
-                          <ChevronDown className="h-3 w-3 flex-shrink-0" />
+                          {aiSuggestLoading ? (
+                            <span className="h-3 w-3 animate-spin rounded-full border-2 border-purple-300 border-t-transparent" />
+                          ) : (
+                            <Sparkles className="h-3 w-3" />
+                          )}
+                          {aiSuggestLoading
+                            ? 'Thinking'
+                            : messageDraft.trim()
+                              ? 'Regenerate'
+                              : 'AI suggest'}
                         </button>
-                        {aiAgentMenuOpen && (
-                          <div className="absolute bottom-full left-0 z-50 mb-2 w-[min(320px,calc(100vw-2rem))] overflow-hidden rounded-lg border border-purple-100 bg-white shadow-pop dark:border-purple-500/20 dark:bg-slate-900">
-                            <div className="border-b border-gray-100 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-ui-text-muted dark:border-ui-dark-border dark:text-ui-dark-text-muted">
-                              AI agent
-                            </div>
-                            <div className="max-h-64 overflow-y-auto p-1">
-                              {[
-                                {
-                                  id: 'default' as const,
-                                  name: 'Default assistant',
-                                  role: 'Platform AI',
-                                  tone: 'fallback',
-                                  avatar: null,
-                                },
-                                ...aiAgents,
-                              ].map((agent) => {
-                                const isSelected = selectedAiAgentId === agent.id;
-                                return (
-                                  <button
-                                    key={agent.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedAiAgentId(agent.id);
-                                      setAiAgentMenuOpen(false);
-                                    }}
-                                    className={`flex w-full items-start gap-2 rounded-md px-2 py-2 text-left transition ${isSelected ? 'bg-purple-50 text-purple-800 dark:bg-purple-500/10 dark:text-purple-200' : 'text-ui-text hover:bg-gray-50 dark:text-ui-dark-text dark:hover:bg-slate-800'}`}
-                                    role="option"
-                                    aria-selected={isSelected}
-                                  >
-                                    <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-purple-100 text-xs font-semibold text-purple-700 dark:bg-purple-500/15 dark:text-purple-200">
-                                      {agent.avatar || (agent.name || 'AI').charAt(0).toUpperCase()}
-                                    </span>
-                                    <span className="min-w-0 flex-1">
-                                      <span className="block truncate text-xs font-semibold">
-                                        {agent.name}
-                                      </span>
-                                      <span className="mt-0.5 block truncate text-[10px] capitalize text-ui-text-muted dark:text-ui-dark-text-muted">
-                                        {[agent.role, agent.tone].filter(Boolean).join(' · ') ||
-                                          'Assistant'}
-                                      </span>
-                                    </span>
-                                    {isSelected && (
-                                      <Check className="mt-1 h-3.5 w-3.5 flex-shrink-0" />
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
+                        {aiAgents.length > 0 && (
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setAiAgentMenuOpen((open) => !open)}
+                              className="flex h-6 max-w-[180px] items-center gap-1.5 rounded-md border border-purple-100 bg-purple-50 px-2 text-[11px] font-medium text-purple-700 transition hover:border-purple-200 hover:bg-purple-100 dark:border-purple-500/20 dark:bg-purple-500/10 dark:text-purple-200 dark:hover:bg-purple-500/15"
+                              aria-haspopup="listbox"
+                              aria-expanded={aiAgentMenuOpen}
+                            >
+                              <Sparkles className="h-3 w-3 flex-shrink-0" />
+                              <span className="min-w-0 truncate">{selectedAiAgentLabel}</span>
+                              <ChevronDown className="h-3 w-3 flex-shrink-0" />
+                            </button>
+                            {aiAgentMenuOpen && (
+                              <div className="absolute bottom-full left-0 z-50 mb-2 w-[min(320px,calc(100vw-2rem))] overflow-hidden rounded-lg border border-purple-100 bg-white shadow-pop dark:border-purple-500/20 dark:bg-slate-900">
+                                <div className="border-b border-gray-100 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-ui-text-muted dark:border-ui-dark-border dark:text-ui-dark-text-muted">
+                                  AI agent
+                                </div>
+                                <div className="max-h-64 overflow-y-auto p-1">
+                                  {[
+                                    {
+                                      id: 'default' as const,
+                                      name: 'Default assistant',
+                                      role: 'Platform AI',
+                                      tone: 'fallback',
+                                      avatar: null,
+                                    },
+                                    ...aiAgents,
+                                  ].map((agent) => {
+                                    const isSelected = selectedAiAgentId === agent.id;
+                                    return (
+                                      <button
+                                        key={agent.id}
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedAiAgentId(agent.id);
+                                          setAiAgentMenuOpen(false);
+                                        }}
+                                        className={`flex w-full items-start gap-2 rounded-md px-2 py-2 text-left transition ${isSelected ? 'bg-purple-50 text-purple-800 dark:bg-purple-500/10 dark:text-purple-200' : 'text-ui-text hover:bg-gray-50 dark:text-ui-dark-text dark:hover:bg-slate-800'}`}
+                                        role="option"
+                                        aria-selected={isSelected}
+                                      >
+                                        <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-purple-100 text-xs font-semibold text-purple-700 dark:bg-purple-500/15 dark:text-purple-200">
+                                          {agent.avatar ||
+                                            (agent.name || 'AI').charAt(0).toUpperCase()}
+                                        </span>
+                                        <span className="min-w-0 flex-1">
+                                          <span className="block truncate text-xs font-semibold">
+                                            {agent.name}
+                                          </span>
+                                          <span className="mt-0.5 block truncate text-[10px] capitalize text-ui-text-muted dark:text-ui-dark-text-muted">
+                                            {[agent.role, agent.tone].filter(Boolean).join(' · ') ||
+                                              'Assistant'}
+                                          </span>
+                                        </span>
+                                        {isSelected && (
+                                          <Check className="mt-1 h-3.5 w-3.5 flex-shrink-0" />
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
-                      </div>
+                      </>
                     )}
                   </div>
                   {attachments.length > 0 && (
@@ -4511,14 +4418,6 @@ export default function ConversationsIndex({
                 <div className="mt-2 flex items-center justify-center gap-1">
                   <button
                     type="button"
-                    onClick={() => setContactTab('calls')}
-                    className={`flex h-8 w-8 items-center justify-center rounded-md transition ${callingReady ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-gray-50 text-ui-text-muted hover:text-ui-text dark:bg-slate-800 dark:text-ui-dark-text-muted dark:hover:text-ui-dark-text'}`}
-                    title="WhatsApp calls"
-                  >
-                    <Phone className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => {
                       setContactTab('notes');
                       setNoteMode(true);
@@ -4550,14 +4449,12 @@ export default function ConversationsIndex({
                 </div>
               </div>
               <div className="border-b border-gray-100 px-2 pt-2 dark:border-ui-dark-border">
-                <div className="grid grid-cols-6 gap-1">
+                <div className="grid grid-cols-4 gap-1">
                   {[
                     ['profile', User, 'Profile'],
                     ['media', Paperclip, 'Media'],
-                    ['calls', Phone, 'Calls'],
                     ['notes', StickyNote, 'Notes'],
                     ['activity', RotateCcw, 'Activity'],
-                    ['orders', ShoppingBag, 'Orders'],
                   ].map(([id, Icon, label]: any) => (
                     <button
                       key={id}
@@ -4586,9 +4483,6 @@ export default function ConversationsIndex({
                 activeGallery={activeGallery}
                 galleryLoadingId={galleryLoadingId}
                 setMediaPreview={setMediaPreview}
-                whatsappCalling={whatsappCalling}
-                activeCalls={activeCalls}
-                callingReady={callingReady}
                 activeInboundCount={activeInboundCount}
                 lastInboundAt={lastInboundAt}
                 activeOutboundCount={activeOutboundCount}
@@ -4631,14 +4525,6 @@ export default function ConversationsIndex({
                   <div className="mt-2 flex items-center justify-center gap-1">
                     <button
                       type="button"
-                      onClick={() => setContactTab('calls')}
-                      className={`flex h-8 w-8 items-center justify-center rounded-md transition ${callingReady ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-gray-50 text-ui-text-muted hover:text-ui-text dark:bg-slate-800 dark:text-ui-dark-text-muted dark:hover:text-ui-dark-text'}`}
-                      title="WhatsApp calls"
-                    >
-                      <Phone className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => {
                         setContactTab('notes');
                         setNoteMode(true);
@@ -4670,14 +4556,12 @@ export default function ConversationsIndex({
                   </div>
                 </div>
                 <div className="border-b border-gray-100 px-2 pt-2 dark:border-ui-dark-border">
-                  <div className="grid grid-cols-6 gap-1">
+                  <div className="grid grid-cols-4 gap-1">
                     {[
                       ['profile', User, 'Profile'],
                       ['media', Paperclip, 'Media'],
-                      ['calls', Phone, 'Calls'],
                       ['notes', StickyNote, 'Notes'],
                       ['activity', RotateCcw, 'Activity'],
-                      ['orders', ShoppingBag, 'Orders'],
                     ].map(([id, Icon, label]: any) => (
                       <button
                         key={id}
@@ -4706,9 +4590,6 @@ export default function ConversationsIndex({
                   activeGallery={activeGallery}
                   galleryLoadingId={galleryLoadingId}
                   setMediaPreview={setMediaPreview}
-                  whatsappCalling={whatsappCalling}
-                  activeCalls={activeCalls}
-                  callingReady={callingReady}
                   activeInboundCount={activeInboundCount}
                   lastInboundAt={lastInboundAt}
                   activeOutboundCount={activeOutboundCount}
@@ -4719,15 +4600,6 @@ export default function ConversationsIndex({
           )}
         </div>
       </div>
-      {incomingCall && (
-        <IncomingCallScreen
-          call={incomingCall}
-          conversation={incomingCallConversation}
-          callingReady={incomingCallingReady}
-          onCallUpdated={(call) => setRecentCallsState((prev) => mergeCallRecords(prev, [call]))}
-          onClose={() => setDismissedCallIds((prev) => new Set([...prev, Number(incomingCall.id)]))}
-        />
-      )}
       {editingContact && activeConversation && (
         <div
           className="fixed inset-0 z-[260] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"

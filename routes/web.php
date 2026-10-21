@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\AccountController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -17,8 +16,6 @@ Route::get('/storage/{path}', function (string $path) {
 
 // Landing page
 Route::get('/', fn () => redirect()->to(url(auth()->check() ? '/app/dashboard' : '/login')))->name('landing');
-Route::get('/sitemap.xml', [\App\Http\Controllers\SeoController::class, 'sitemap'])->name('seo.sitemap');
-Route::get('/robots.txt', [\App\Http\Controllers\SeoController::class, 'robots'])->name('seo.robots');
 
 Route::prefix('/api/v1/whatsapp')
     ->middleware(['public-api.enabled', 'public-api.auth', 'log.api', 'throttle:60,1'])
@@ -35,8 +32,6 @@ Route::prefix('/api/v1/whatsapp')
         Route::post('/messages/list', [\App\Http\Controllers\PublicApi\WhatsAppController::class, 'sendList'])->name('messages.list');
         Route::post('/messages/buttons', [\App\Http\Controllers\PublicApi\WhatsAppController::class, 'sendButtons'])->name('messages.buttons');
     });
-
-
 
 Route::post('/webhooks/whatsapp/flows/{flow?}/data', [\App\Modules\WhatsApp\Http\Controllers\FlowDataController::class, 'receive'])
     ->middleware(['throttle:120,1', \App\Http\Middleware\LogApiRequests::class])
@@ -83,8 +78,6 @@ Route::get('/csrf-token/refresh', [\App\Http\Controllers\CsrfTokenController::cl
 Route::get('/cron/run', \App\Http\Controllers\CronRunController::class)
     ->name('cron.run');
 
-
-
 // App routes (requires auth + account + account active + account subscribed)
 // restrict.chat.agent: chat agents (role member) only see Inbox; others have full access
 Route::middleware(['auth', 'account.resolve', 'account.active', 'account.subscribed', 'restrict.chat.agent'])->prefix('/app')->name('app.')->group(function () {
@@ -126,13 +119,11 @@ Route::middleware(['auth', 'account.resolve', 'account.active', 'account.subscri
     Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationCenterController::class, 'markAllRead'])->name('notifications.read-all');
     Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationCenterController::class, 'markRead'])->name('notifications.read');
 
-
     Route::get('/quick-replies', [\App\Http\Controllers\QuickReplyController::class, 'index'])->name('quick-replies.index');
     Route::post('/quick-replies', [\App\Http\Controllers\QuickReplyController::class, 'store'])->name('quick-replies.store');
     Route::patch('/quick-replies/{quickReply}', [\App\Http\Controllers\QuickReplyController::class, 'update'])->name('quick-replies.update');
     Route::post('/quick-replies/{quickReply}/toggle', [\App\Http\Controllers\QuickReplyController::class, 'toggle'])->name('quick-replies.toggle');
     Route::delete('/quick-replies/{quickReply}', [\App\Http\Controllers\QuickReplyController::class, 'destroy'])->name('quick-replies.destroy');
-
 
     // Load module routes (WhatsApp, Chatbots, etc.)
     if (file_exists(__DIR__.'/../app/Modules/WhatsApp/routes/web.php')) {
@@ -144,7 +135,6 @@ Route::middleware(['auth', 'account.resolve', 'account.active', 'account.subscri
     if (file_exists(__DIR__.'/../app/Modules/Contacts/routes/web.php')) {
         require __DIR__.'/../app/Modules/Contacts/routes/web.php';
     }
-
 
     if (file_exists(__DIR__.'/../app/Modules/Chatbots/routes/web.php')) {
         require __DIR__.'/../app/Modules/Chatbots/routes/web.php';
@@ -166,7 +156,6 @@ Route::middleware(['auth', 'account.resolve', 'account.active', 'account.subscri
     // Activity Logs
     Route::get('/activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs');
 });
-
 
 // Profile routes (password.update is defined in auth.php)
 Route::middleware('auth')->group(function () {
@@ -323,4 +312,3 @@ Route::prefix('/webhooks/whatsapp')
         Route::get('/{connection}', [\App\Modules\WhatsApp\Http\Controllers\WebhookController::class, 'verify'])->name('verify');
         Route::post('/{connection}', [\App\Modules\WhatsApp\Http\Controllers\WebhookController::class, 'receive'])->name('receive');
     });
-

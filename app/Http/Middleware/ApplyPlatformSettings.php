@@ -33,9 +33,6 @@ class ApplyPlatformSettings
         // Apply WhatsApp Meta configuration
         $settingsService->applyWhatsAppConfig();
 
-        // Apply Google OAuth configuration
-        $settingsService->applyGoogleConfig();
-
         // Apply storage configuration
         $settingsService->applyStorageConfig();
 

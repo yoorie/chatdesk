@@ -4,7 +4,6 @@ namespace Tests\Feature\WhatsApp;
 
 use App\Models\Account;
 use App\Models\Plan;
-use App\Models\PlatformSetting;
 use App\Models\User;
 use App\Modules\WhatsApp\Models\WhatsAppConnection;
 use App\Modules\WhatsApp\Services\MetaGraphService;
@@ -33,7 +32,7 @@ class ConnectionTest extends TestCase
         ]);
         $this->account->users()->attach($this->user->id, ['role' => 'owner']);
 
-        $starter = Plan::where('key', 'starter')->firstOrFail();
+        $starter = Plan::where('key', 'self-hosted')->firstOrFail();
         app(\App\Core\Billing\SubscriptionService::class)->changePlan($this->account, $starter, $this->user);
 
         session(['current_account_id' => $this->account->id]);

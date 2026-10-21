@@ -102,14 +102,14 @@ class BotController extends Controller
             'connections' => WhatsAppConnection::where('account_id', $account->id)
                 ->where('is_active', true)
                 ->get(['id', 'name']),
-	            'automationOptions' => [
-	                'agents' => $account->getAssignableAgents(),
-	                'ai_agents' => $this->aiAgentsForAccount($account),
-	                'tags' => ContactTag::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'color']),
-	                'segments' => ContactSegment::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'contact_count']),
-	                'templates' => WhatsAppTemplate::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'language', 'status']),
-	                'lists' => WhatsAppList::where('account_id', $account->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
-	                'flows' => WhatsAppFlow::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'meta_flow_id', 'status']),
+            'automationOptions' => [
+                'agents' => $account->getAssignableAgents(),
+                'ai_agents' => $this->aiAgentsForAccount($account),
+                'tags' => ContactTag::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'color']),
+                'segments' => ContactSegment::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'contact_count']),
+                'templates' => WhatsAppTemplate::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'language', 'status']),
+                'lists' => WhatsAppList::where('account_id', $account->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+                'flows' => WhatsAppFlow::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'meta_flow_id', 'status']),
             ],
             'selectedBot' => $this->selectedBotPayload($request, $account),
         ]);
@@ -160,20 +160,20 @@ class BotController extends Controller
             'connections' => WhatsAppConnection::where('account_id', $account->id)
                 ->where('is_active', true)
                 ->get(['id', 'name']),
-	            'automationOptions' => [
-	                'agents' => $account->getAssignableAgents(),
-	                'ai_agents' => $this->aiAgentsForAccount($account),
-	                'tags' => ContactTag::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'color']),
-	                'segments' => ContactSegment::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'contact_count']),
-	                'templates' => WhatsAppTemplate::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'language', 'status']),
-	                'lists' => WhatsAppList::where('account_id', $account->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
-	                'flows' => WhatsAppFlow::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'meta_flow_id', 'status']),
+            'automationOptions' => [
+                'agents' => $account->getAssignableAgents(),
+                'ai_agents' => $this->aiAgentsForAccount($account),
+                'tags' => ContactTag::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'color']),
+                'segments' => ContactSegment::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'contact_count']),
+                'templates' => WhatsAppTemplate::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'language', 'status']),
+                'lists' => WhatsAppList::where('account_id', $account->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+                'flows' => WhatsAppFlow::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'meta_flow_id', 'status']),
             ],
         ]);
     }
 
-	    protected function botPayload($account, Bot $bot): array
-	    {
+    protected function botPayload($account, Bot $bot): array
+    {
         $executions = BotExecution::where('account_id', $account->id)
             ->where('bot_id', $bot->id)
             ->with('flow:id,name')
@@ -517,9 +517,9 @@ class BotController extends Controller
             ->orderBy('priority')
             ->get();
 
-	        $trace = [];
-	        foreach ($flows as $flow) {
-	            if (! $this->simulateTriggerMatches($flow->trigger ?: [], $message, $buttonId)) {
+        $trace = [];
+        foreach ($flows as $flow) {
+            if (! $this->simulateTriggerMatches($flow->trigger ?: [], $message, $buttonId)) {
                 $trace[] = [
                     'flow_id' => $flow->id,
                     'flow_name' => $flow->name,
@@ -527,20 +527,21 @@ class BotController extends Controller
                     'message' => 'Trigger did not match.',
                     'steps' => [],
                 ];
+
                 continue;
             }
 
             $trace[] = [
-	                'flow_id' => $flow->id,
-	                'flow_name' => $flow->name,
-	                'matched' => true,
-	                'message' => 'Trigger matched. Dry-run only: no messages or side effects were sent.',
-	                'safety' => [
-	                    'cooldown_minutes' => (int) ($flow->trigger['cooldown_minutes'] ?? 0),
-	                    'stop_on_first_flow' => (bool) $bot->stop_on_first_flow,
-	                ],
-	                'steps' => $this->simulateFlowSteps($flow, $message),
-	            ];
+                'flow_id' => $flow->id,
+                'flow_name' => $flow->name,
+                'matched' => true,
+                'message' => 'Trigger matched. Dry-run only: no messages or side effects were sent.',
+                'safety' => [
+                    'cooldown_minutes' => (int) ($flow->trigger['cooldown_minutes'] ?? 0),
+                    'stop_on_first_flow' => (bool) $bot->stop_on_first_flow,
+                ],
+                'steps' => $this->simulateFlowSteps($flow, $message),
+            ];
 
             if ($bot->stop_on_first_flow) {
                 break;
@@ -651,6 +652,7 @@ class BotController extends Controller
                 if ($next) {
                     $queue[] = $next->to_node_id;
                 }
+
                 continue;
             }
 
@@ -662,42 +664,42 @@ class BotController extends Controller
         return $steps;
     }
 
-	    protected function simulateCondition(array $config, string $message): bool
-	    {
-	        $type = $config['type'] ?? 'text_contains';
-	        $value = (string) ($config['value'] ?? '');
-	        $pattern = (string) ($config['pattern'] ?? $value);
-	        $caseSensitive = (bool) ($config['case_sensitive'] ?? false);
-	        $text = $caseSensitive ? $message : mb_strtolower($message);
-	        $needle = $caseSensitive ? $value : mb_strtolower($value);
+    protected function simulateCondition(array $config, string $message): bool
+    {
+        $type = $config['type'] ?? 'text_contains';
+        $value = (string) ($config['value'] ?? '');
+        $pattern = (string) ($config['pattern'] ?? $value);
+        $caseSensitive = (bool) ($config['case_sensitive'] ?? false);
+        $text = $caseSensitive ? $message : mb_strtolower($message);
+        $needle = $caseSensitive ? $value : mb_strtolower($value);
 
         return match ($type) {
-	            'text_equals' => $text === $needle,
-	            'text_starts_with' => str_starts_with($text, $needle),
-	            'regex_match' => $pattern !== '' && @preg_match($pattern, $message) === 1,
-	            default => $needle === '' || str_contains($text, $needle),
-	        };
-	    }
+            'text_equals' => $text === $needle,
+            'text_starts_with' => str_starts_with($text, $needle),
+            'regex_match' => $pattern !== '' && @preg_match($pattern, $message) === 1,
+            default => $needle === '' || str_contains($text, $needle),
+        };
+    }
 
-	    protected function aiAgentsForAccount($account): array
-	    {
-	        if (! $account || ! Schema::hasTable('ai_agents')) {
-	            return [];
-	        }
+    protected function aiAgentsForAccount($account): array
+    {
+        if (! $account || ! Schema::hasTable('ai_agents')) {
+            return [];
+        }
 
-	        return AiAgent::where('account_id', $account->id)
-	            ->where('is_active', true)
-	            ->orderBy('name')
-	            ->get(['id', 'name', 'role', 'mode'])
-	            ->map(fn (AiAgent $agent) => [
-	                'id' => $agent->id,
-	                'name' => $agent->name,
-	                'role' => $agent->role,
-	                'mode' => $agent->mode,
-	            ])
-	            ->values()
-	            ->all();
-	    }
+        return AiAgent::where('account_id', $account->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'role', 'mode'])
+            ->map(fn (AiAgent $agent) => [
+                'id' => $agent->id,
+                'name' => $agent->name,
+                'role' => $agent->role,
+                'mode' => $agent->mode,
+            ])
+            ->values()
+            ->all();
+    }
 
     protected function simulateActionDetail(array $config): string
     {
@@ -705,8 +707,6 @@ class BotController extends Controller
             'send_text' => Str::limit((string) ($config['message'] ?? 'Send text'), 140),
             'send_buttons' => 'Send buttons: '.collect($config['buttons'] ?? [])->pluck('text')->join(', '),
             'send_media' => 'Send '.($config['media_type'] ?? 'media').': '.($config['media_url'] ?? 'missing URL'),
-            'send_payment_link' => ! empty($config['create_razorpay_link']) ? 'Create dynamic payment link' : 'Send payment URL',
-            'ai_agent_reply' => 'AI agent replies. Goal: '.Str::limit((string) ($config['instruction'] ?? 'Default reply'), 120),
             'handoff' => 'Mark human handoff. Reason: '.($config['reason'] ?? 'handoff'),
             'add_tag' => 'Add tag: '.($config['tag_name'] ?? $config['tag_id'] ?? 'tag'),
             'create_deal' => 'Create deal: '.($config['title'] ?? 'WhatsApp lead'),

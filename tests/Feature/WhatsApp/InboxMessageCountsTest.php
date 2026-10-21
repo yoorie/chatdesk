@@ -39,7 +39,7 @@ class InboxMessageCountsTest extends TestCase
         $this->account->users()->attach($this->user->id, ['role' => 'member']);
         app(\App\Core\Billing\SubscriptionService::class)->changePlan(
             $this->account,
-            Plan::where('key', 'starter')->firstOrFail(),
+            Plan::where('key', 'self-hosted')->firstOrFail(),
             $this->user
         );
         $this->connection = WhatsAppConnection::factory()->create(['account_id' => $this->account->id]);

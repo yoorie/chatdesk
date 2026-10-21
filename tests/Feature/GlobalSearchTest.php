@@ -23,7 +23,7 @@ class GlobalSearchTest extends TestCase
 
     public function test_global_search_returns_workspace_results(): void
     {
-        $account = $this->createAccountWithPlan('starter');
+        $account = $this->createAccountWithPlan('self-hosted');
         $this->actingAsAccountOwner($account);
 
         WhatsAppContact::create([
@@ -74,8 +74,8 @@ class GlobalSearchTest extends TestCase
 
     public function test_global_search_does_not_leak_other_workspace_data(): void
     {
-        $account = $this->createAccountWithPlan('starter');
-        $other = $this->createAccountWithPlan('starter');
+        $account = $this->createAccountWithPlan('self-hosted');
+        $other = $this->createAccountWithPlan('self-hosted');
         $this->actingAsAccountOwner($account);
 
         WhatsAppContact::create([

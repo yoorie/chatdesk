@@ -6,8 +6,8 @@ use App\Modules\WhatsApp\Services\WebhookSignatureVerifier;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class WebhookSecurity
 {
@@ -176,7 +176,7 @@ class WebhookSecurity
                 'WhatsApp webhook signature not enforced',
                 $message,
                 'warning',
-                route('platform.settings', ['tab' => 'integrations']),
+                null,
                 ['issue' => $issue, 'dedupe_key' => 'whatsapp_webhook_signature_'.$issue]
             );
         } catch (\Throwable) {

@@ -33,7 +33,7 @@ class ContactImportTest extends TestCase
         $this->account = Account::factory()->create(['owner_id' => $this->user->id]);
         $this->account->users()->attach($this->user->id, ['role' => 'owner']);
 
-        $plan = Plan::where('key', 'starter')->firstOrFail();
+        $plan = Plan::where('key', 'self-hosted')->firstOrFail();
         app(SubscriptionService::class)->changePlan($this->account, $plan, $this->user);
     }
 

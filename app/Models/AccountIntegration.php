@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Crypt;
 use Throwable;
 
@@ -36,11 +35,6 @@ class AccountIntegration extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
-    }
-
-    public function syncLogs(): HasMany
-    {
-        return $this->hasMany(AccountIntegrationSyncLog::class);
     }
 
     public function isConnected(): bool

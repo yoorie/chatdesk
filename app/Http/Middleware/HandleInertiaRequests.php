@@ -189,12 +189,9 @@ class HandleInertiaRequests extends Middleware
             // so the client can refresh <meta name="csrf-token"> after the session token
             // is rotated (login, logout, session regenerate) without a full page load.
             'csrf_token' => \Inertia\Inertia::always(fn () => csrf_token()),
-            // Public website CMS (menus, announcement, landing sections). Cached.
-            'cms' => fn () => $platformView ? null : app(\App\Services\Cms\CmsService::class)->publicData(),
             'demo' => config('demo.enabled') ? [
                 'enabled' => true,
                 'message' => config('demo.message'),
-                'admin' => ['email' => config('demo.admin_email'), 'password' => config('demo.admin_password')],
                 'owner' => ['email' => config('demo.user_email'), 'password' => config('demo.user_password')],
                 'agent' => ['email' => config('demo.agent_email'), 'password' => config('demo.agent_password')],
                 'user' => ['email' => config('demo.user_email'), 'password' => config('demo.user_password')],

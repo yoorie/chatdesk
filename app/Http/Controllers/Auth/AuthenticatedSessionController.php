@@ -20,11 +20,9 @@ class AuthenticatedSessionController extends Controller
     {
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
-            'googleOAuthEnabled' => (bool) \App\Models\PlatformSetting::get('integrations.google_oauth_enabled', false)
-                && filled(config('services.google.client_id'))
-                && filled(config('services.google.client_secret'))
-                && filled(config('services.google.redirect')),
-            'status' => session('status')]);
+            'status' => session('status'),
+            'canRegister' => ! \App\Models\User::query()->exists(),
+        ]);
     }
 
     /**
@@ -40,19 +38,6 @@ class AuthenticatedSessionController extends Controller
         $intendedUrl = $request->session()->pull('url.intended');
         $intendedPath = $this->intendedPath($intendedUrl);
 
-        // Super admins should go directly to platform dashboard
-        if ($user->isSuperAdmin()) {
-            if ($intendedUrl && $intendedPath && str_starts_with($intendedPath, '/platform')) {
-                return redirect($intendedUrl);
-            }
-
-            return redirect()->route('app.dashboard');
-        }
-
-        if ($intendedPath && str_starts_with($intendedPath, '/platform')) {
-            $intendedUrl = null;
-        }
-
         if ($intendedUrl) {
             return redirect($intendedUrl);
         }
@@ -62,12 +47,12 @@ class AuthenticatedSessionController extends Controller
         $accounts = $user->accounts()->get()->merge($user->ownedAccounts()->get());
 
         if ($accounts->isEmpty()) {
-            // Redirect to onboarding
-            return redirect()->route('onboarding');
-        }
+            \Illuminate\Support\Facades\Auth::guard('web')->logout();
 
-        // Redirect to first account dashboard
-        $firstAccount = $accounts->first();
+            return redirect()->route('login')->withErrors([
+                'email' => 'Your user is not part of this organisation yet. Ask an admin to invite you.',
+            ]);
+        }
 
         return redirect()->route('app.dashboard');
     }

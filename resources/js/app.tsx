@@ -21,11 +21,6 @@ function readInitialPage(): any {
 const initialPage = readInitialPage();
 (window as any).Ziggy = { ...initialPage.props?.ziggy, location: undefined };
 (window as any).route = (name?: any, params?: any, absolute?: boolean) => {
-  // Open-source edition: a link to a page that only exists in ChatDesk paid plans / Zyptos
-  // resolves to '#' instead of crashing the page.
-  if (typeof name === 'string' && (window as any).Ziggy?.routes && !(name in (window as any).Ziggy.routes)) {
-    return '#';
-  }
   return ziggyRoute(name, params, absolute, (window as any).Ziggy);
 };
 

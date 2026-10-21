@@ -73,7 +73,7 @@ class FlowBuilderTest extends TestCase
 
     public function test_owner_can_build_and_save_a_flow_graph_from_builder_endpoints(): void
     {
-        $account = $this->createAccountWithPlan('pro');
+        $account = $this->createAccountWithPlan('self-hosted');
         $owner = $this->actingAsAccountOwner($account);
 
         $this->post(route('app.chatbots.store'), [

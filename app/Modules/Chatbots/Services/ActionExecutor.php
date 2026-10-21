@@ -6,26 +6,18 @@ use App\Core\Billing\EntitlementService;
 use App\Core\Billing\UsageService;
 use App\Models\AccountAppointment;
 use App\Models\AccountDeal;
-use App\Models\AccountIntegration;
-use App\Models\AiAgent;
 use App\Modules\Chatbots\Models\BotEdge;
 use App\Modules\Chatbots\Models\BotNode;
 use App\Modules\Contacts\Models\ContactSegment;
 use App\Modules\Contacts\Models\ContactTag;
 use App\Modules\WhatsApp\Events\Inbox\ConversationUpdated;
 use App\Modules\WhatsApp\Events\Inbox\MessageCreated;
-use App\Modules\WhatsApp\Events\Inbox\MessageUpdated;
 use App\Modules\WhatsApp\Models\WhatsAppFlow;
 use App\Modules\WhatsApp\Models\WhatsAppList;
 use App\Modules\WhatsApp\Models\WhatsAppMessage;
 use App\Modules\WhatsApp\Services\TemplateComposer;
 use App\Modules\WhatsApp\Services\WhatsAppClient;
-use App\Services\AI\AiReplyGuardrail;
-use App\Services\AI\ConversationAssistantService;
-use App\Services\RazorpayPaymentLinkService;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -48,7 +40,7 @@ class ActionExecutor
     {
         $type = $node->type;
         $config = $node->config;
-        $directActionTypes = ['send_text', 'send_template', 'send_buttons', 'send_list', 'send_media', 'send_flow', 'assign_agent', 'add_tag', 'add_segment', 'update_contact', 'create_deal', 'create_appointment', 'sync_integration', 'set_status', 'set_priority', 'handoff', 'send_payment_link', 'ai_agent_reply'];
+        $directActionTypes = ['send_text', 'send_template', 'send_buttons', 'send_list', 'send_media', 'send_flow', 'assign_agent', 'add_tag', 'add_segment', 'update_contact', 'create_deal', 'create_appointment', 'set_status', 'set_priority', 'handoff'];
 
         if (in_array($type, $directActionTypes, true)) {
             $config['action_type'] = $type;
@@ -81,12 +73,9 @@ class ActionExecutor
             'update_contact' => $this->updateContact($config, $context),
             'create_deal' => $this->createDeal($config, $context),
             'create_appointment' => $this->createAppointment($config, $context),
-            'sync_integration' => $this->syncIntegration($config, $context),
             'set_status' => $this->setStatus($config, $context),
             'set_priority' => $this->setPriority($config, $context),
             'handoff' => $this->handoff($config, $context),
-            'send_payment_link' => $this->sendPaymentLink($config, $context),
-            'ai_agent_reply' => $this->sendAiAgentReply($config, $context),
             default => ['success' => false, 'error' => "Unknown action: {$actionType}"],
         };
     }
@@ -887,226 +876,6 @@ class ActionExecutor
         ]);
 
         return ['success' => true, 'appointment_id' => $appointment->id, 'scheduled_at' => $appointment->scheduled_at?->toIso8601String()];
-    }
-
-    protected function syncIntegration(array $config, BotContext $context): array
-    {
-        $provider = trim((string) ($config['provider'] ?? ''));
-        if ($provider === '') {
-            return ['success' => false, 'error' => 'Integration provider is required'];
-        }
-
-        $integration = AccountIntegration::where('account_id', $context->account->id)
-            ->where('provider', $provider)
-            ->where('status', 'connected')
-            ->first();
-
-        if (! $integration) {
-            return ['success' => false, 'error' => "Connected {$provider} integration not found"];
-        }
-
-        try {
-            throw new \RuntimeException('Integration sync is not available in the ChatDesk open-source edition.');
-
-            return [
-                'success' => true,
-                'provider' => $provider,
-                'created' => (int) ($result['created'] ?? 0),
-                'updated' => (int) ($result['updated'] ?? 0),
-                'skipped' => (int) ($result['skipped'] ?? 0),
-            ];
-        } catch (\Throwable $e) {
-            Log::channel('chatbots')->warning('Automation integration sync failed', [
-                'account_id' => $context->account->id,
-                'provider' => $provider,
-                'error' => $e->getMessage(),
-            ]);
-
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
-    }
-
-    protected function sendPaymentLink(array $config, BotContext $context): array
-    {
-        $paymentUrl = trim((string) ($config['payment_url'] ?? ''));
-        $amount = max(0, (int) ($config['amount'] ?? 0));
-        $currency = strtoupper((string) ($config['currency'] ?? 'INR'));
-
-        $shouldCreateRazorpayLink = (bool) ($config['create_razorpay_link'] ?? false);
-
-        if ($shouldCreateRazorpayLink || $paymentUrl === '') {
-            try {
-                $contact = $context->conversation->contact;
-                $link = app(RazorpayPaymentLinkService::class)->createForAccount($context->account, [
-                    'amount' => $amount,
-                    'currency' => $currency,
-                    'reference_id' => 'bot_'.$context->conversation->id.'_'.time(),
-                    'description' => $config['description'] ?? 'WhatsApp payment request',
-                    'customer_name' => $contact?->name ?: 'Customer',
-                    'customer_phone' => $contact?->phone ?: $contact?->wa_id,
-                    'customer_email' => $contact?->email,
-                    'notes' => [
-                        'source' => 'chatbot',
-                        'conversation_id' => (string) $context->conversation->id,
-                        'bot_execution_id' => (string) ($context->metadata['execution_id'] ?? ''),
-                    ],
-                ]);
-                $paymentUrl = (string) ($link['short_url'] ?? $link['url'] ?? '');
-
-                $metadata = $context->conversation->metadata ?: [];
-                $metadata['last_razorpay_payment_link'] = [
-                    'id' => $link['id'] ?? null,
-                    'short_url' => $paymentUrl,
-                    'amount' => $amount,
-                    'created_at' => now()->toIso8601String(),
-                ];
-                $context->conversation->update(['metadata' => $metadata]);
-            } catch (\Throwable $e) {
-                if ($shouldCreateRazorpayLink && ! ($config['allow_static_fallback'] ?? false)) {
-                    return ['success' => false, 'error' => 'Dynamic Razorpay payment link creation failed: '.$e->getMessage()];
-                }
-
-                $fallbackUrl = trim((string) ($config['fallback_payment_url'] ?? ''));
-                if ($fallbackUrl !== '' && filter_var($fallbackUrl, FILTER_VALIDATE_URL)) {
-                    $paymentUrl = $fallbackUrl;
-                } else {
-                    return ['success' => false, 'error' => 'Payment link creation failed: '.$e->getMessage()];
-                }
-            }
-        }
-
-        if ($paymentUrl === '' || ! filter_var($paymentUrl, FILTER_VALIDATE_URL)) {
-            return ['success' => false, 'error' => 'A valid payment URL is required'];
-        }
-
-        if (AiReplyGuardrail::isInvalidPlatformPaymentUrl($paymentUrl)) {
-            return ['success' => false, 'error' => ('Invalid '.brand_name().' checkout URL. Use dynamic Razorpay payment links or send '.url('/pricing').'.')];
-        }
-
-        $message = trim((string) ($config['message'] ?? 'Please complete your payment using this link: {{payment_url}}'));
-        $message = str_replace(
-            ['{{payment_url}}', '{{amount}}', '{{currency}}'],
-            [$paymentUrl, $amount > 0 ? number_format($amount / 100, 2) : '', $currency],
-            $message
-        );
-
-        return $this->sendTextMessage([
-            'message' => $message,
-        ], $context);
-    }
-
-    protected function sendAiAgentReply(array $config, BotContext $context): array
-    {
-        if (! Schema::hasTable('ai_agents')) {
-            return ['success' => false, 'error' => 'AI agents are not available'];
-        }
-
-        $agent = null;
-        $agentId = $config['agent_id'] ?? null;
-        if ($agentId) {
-            $agent = AiAgent::where('account_id', $context->account->id)
-                ->where('is_active', true)
-                ->find((int) $agentId);
-        }
-
-        if (! $agent) {
-            $role = $config['agent_role'] ?? null;
-            $agent = AiAgent::where('account_id', $context->account->id)
-                ->where('is_active', true)
-                ->when($role, fn ($query) => $query->where('role', $role))
-                ->latest()
-                ->first();
-        }
-
-        if (! $agent) {
-            return ['success' => false, 'error' => 'No active AI agent found'];
-        }
-
-        try {
-            $this->entitlementService->assertWithinLimit($context->account, 'messages_monthly', 1);
-
-            $instruction = trim((string) ($config['instruction'] ?? 'Reply as this AI agent. Help the customer, qualify intent, and suggest the next step. Be concise but complete.'));
-            $maxChars = max(120, min(3900, (int) ($config['max_chars'] ?? $agent->max_reply_chars ?? 3500)));
-            $instruction .= "\n\nWhatsApp automation limit: respond in a concise WhatsApp-safe format, max {$maxChars} characters. Include complete pricing or plan details when the customer asks for them. Do not include markdown tables, very long sections, or unfinished sentences. ".AiReplyGuardrail::paymentUrlInstruction();
-            $suggestion = trim(app(ConversationAssistantService::class)->suggestReply(
-                $context->conversation,
-                25,
-                $instruction,
-                $agent,
-                true,
-                max(500, min(3000, (int) ceil($maxChars / 3)))
-            ));
-
-            $suggestion = trim(preg_replace('/^["\']|["\']$/', '', $suggestion) ?? $suggestion);
-            $suggestion = AiReplyGuardrail::sanitize($suggestion);
-            $suggestion = $this->limitWhatsAppText($suggestion, $maxChars);
-            if ($suggestion === '') {
-                return ['success' => false, 'error' => 'AI agent returned an empty reply'];
-            }
-
-            $contact = $context->conversation->contact;
-            $toWaId = $contact?->wa_id;
-            if (! $toWaId) {
-                return ['success' => false, 'error' => 'Conversation contact wa_id not found'];
-            }
-
-            $outboundMessage = DB::transaction(function () use ($context, $suggestion, $agent) {
-                return WhatsAppMessage::create([
-                    'account_id' => $context->account->id,
-                    'whatsapp_conversation_id' => $context->conversation->id,
-                    'direction' => 'outbound',
-                    'type' => 'text',
-                    'text_body' => $suggestion,
-                    'status' => 'queued',
-                    'payload' => [
-                        'automation' => 'chatbot_ai_agent_node',
-                        'ai_agent_id' => $agent->id,
-                        'bot_execution_id' => $context->metadata['execution_id'] ?? null,
-                    ],
-                ]);
-            });
-
-            event(new MessageCreated($outboundMessage));
-
-            $response = $this->whatsappClient->sendTextMessage(
-                $context->connection,
-                $toWaId,
-                $suggestion,
-                $context->inboundMessage->meta_message_id
-            );
-
-            $outboundMessage->update([
-                'meta_message_id' => $response['messages'][0]['id'] ?? null,
-                'status' => 'sent',
-                'sent_at' => now(),
-                'payload' => array_merge($outboundMessage->payload ?? [], ['response' => $response]),
-            ]);
-
-            $this->usageService->incrementMessages($context->account, 1);
-            $context->conversation->update([
-                'last_message_at' => now(),
-                'last_message_preview' => Str::limit($suggestion, 100, ''),
-                'metadata' => array_merge($context->conversation->metadata ?? [], [
-                    'ai_agent_last_reply_at' => now()->toISOString(),
-                    'ai_agent_last_agent_id' => $agent->id,
-                    'ai_agent_transfer_source' => 'chatbot_flow',
-                ]),
-            ]);
-
-            event(new MessageUpdated($outboundMessage));
-            event(new ConversationUpdated($context->conversation));
-
-            return ['success' => true, 'message_id' => $outboundMessage->id, 'ai_agent_id' => $agent->id];
-        } catch (\Throwable $e) {
-            Log::channel('chatbots')->error('Failed to run AI agent node', [
-                'error' => $e->getMessage(),
-                'account_id' => $context->account->id,
-                'conversation_id' => $context->conversation->id,
-                'agent_id' => $agent->id,
-            ]);
-
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
     }
 
     protected function limitWhatsAppText(string $text, int $maxChars = 1500): string

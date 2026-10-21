@@ -1,4 +1,4 @@
-import { appBase, appUrl } from '@/lib/appUrl';
+import { appUrl } from '@/lib/appUrl';
 import { brandName } from './brand';
 /**
  * Customer-facing wording helpers.
@@ -224,7 +224,8 @@ const META_ERROR_CODES: Record<string, string> = {
   '368': 'WhatsApp has temporarily limited this number for policy reasons.',
   '80007': 'Too many requests right now. Please wait a minute and try again.',
   '130429': `You are sending messages too quickly. ${brandName()} will slow down; please try again shortly.`,
-  '130472': 'This customer is part of a WhatsApp experiment and did not receive the marketing message.',
+  '130472':
+    'This customer is part of a WhatsApp experiment and did not receive the marketing message.',
   '130497': 'WhatsApp does not allow this type of message to be sent to this country.',
   '131000': 'Something went wrong on WhatsApp. Please try again.',
   '131005': 'Your WhatsApp account does not have permission for this action.',
@@ -232,33 +233,43 @@ const META_ERROR_CODES: Record<string, string> = {
   '131009': 'One of the values in this message is not valid. Please check it and try again.',
   '131016': 'WhatsApp is temporarily unavailable. Please try again in a few minutes.',
   '131021': 'You cannot send a message to your own business number.',
-  '131026': 'This message could not be delivered. The number may not use WhatsApp or may need to update the app.',
+  '131026':
+    'This message could not be delivered. The number may not use WhatsApp or may need to update the app.',
   '131031': 'Your WhatsApp account has been locked by Meta. Check Meta Business Suite for details.',
   '131037': 'Your WhatsApp display name needs approval before you can send messages.',
-  '131042': 'There is a payment problem on your Meta account. Add or update a payment method in Meta Business Suite.',
-  '131045': 'Your business phone number needs to be registered again. Reconnect your WhatsApp account.',
-  '131047': 'More than 24 hours have passed since the customer last replied. Send an approved template to restart the chat.',
+  '131042':
+    'There is a payment problem on your Meta account. Add or update a payment method in Meta Business Suite.',
+  '131045':
+    'Your business phone number needs to be registered again. Reconnect your WhatsApp account.',
+  '131047':
+    'More than 24 hours have passed since the customer last replied. Send an approved template to restart the chat.',
   '131048': 'Too many of your messages were reported as spam, so sending is limited for now.',
-  '131049': 'WhatsApp held back this marketing message to keep a healthy experience for the customer. Try again later.',
+  '131049':
+    'WhatsApp held back this marketing message to keep a healthy experience for the customer. Try again later.',
   '131050': 'This customer has stopped receiving marketing messages from you.',
   '131051': 'This message type is not supported.',
   '131052': 'The media file could not be downloaded. Please ask the customer to send it again.',
   '131053': 'The media file could not be uploaded. Check the file type and size and try again.',
-  '131056': 'Too many messages were sent to this customer in a short time. Please wait and try again.',
+  '131056':
+    'Too many messages were sent to this customer in a short time. Please wait and try again.',
   '131057': 'Your WhatsApp account is under maintenance. Please try again later.',
-  '132000': 'The template variables do not match the approved template. Check the values and try again.',
+  '132000':
+    'The template variables do not match the approved template. Check the values and try again.',
   '132001': 'This template is not available in the selected language, or is not approved yet.',
-  '132005': 'The message is too long once the variables are filled in. Shorten the values and try again.',
+  '132005':
+    'The message is too long once the variables are filled in. Shorten the values and try again.',
   '132007': 'This template breaks a WhatsApp content rule. Edit it and submit it again.',
   '132012': 'The template variables are in the wrong format. Check the values and try again.',
-  '132015': 'This template has been paused by WhatsApp because of low quality. Edit it or use another template.',
+  '132015':
+    'This template has been paused by WhatsApp because of low quality. Edit it or use another template.',
   '132016': 'This template has been disabled by WhatsApp. Use another template.',
   '132068': 'This WhatsApp Flow is blocked. Check it in WhatsApp Flows.',
   '132069': 'This WhatsApp Flow is being slowed down by WhatsApp. Please try again later.',
   '133000': 'Your phone number registration is not complete. Reconnect your WhatsApp account.',
   '133004': 'WhatsApp is temporarily unavailable. Please try again in a few minutes.',
   '133005': 'The PIN for this phone number is incorrect.',
-  '133010': 'This phone number is not registered with WhatsApp yet. Reconnect your WhatsApp account.',
+  '133010':
+    'This phone number is not registered with WhatsApp yet. Reconnect your WhatsApp account.',
   '135000': 'Something went wrong on WhatsApp. Please try again.',
   '2388093': 'This template name is already in use in this language. Pick a different name.',
   '2388024': 'A template with this name already exists. Pick a different name.',
@@ -271,15 +282,39 @@ const META_ERROR_CODES: Record<string, string> = {
 };
 
 const RAW_PATTERNS: Array<[RegExp, string]> = [
-  [/24.?hour|re-?engagement|outside.*(customer service|session) window/i, META_ERROR_CODES['131047']],
-  [/access token|session has expired|error validating|oauth|token.*(expired|invalid)/i, META_ERROR_CODES['190']],
-  [/(permission|permissions).*(denied|missing|not granted)|does not have permission/i, META_ERROR_CODES['10']],
+  [
+    /24.?hour|re-?engagement|outside.*(customer service|session) window/i,
+    META_ERROR_CODES['131047'],
+  ],
+  [
+    /access token|session has expired|error validating|oauth|token.*(expired|invalid)/i,
+    META_ERROR_CODES['190'],
+  ],
+  [
+    /(permission|permissions).*(denied|missing|not granted)|does not have permission/i,
+    META_ERROR_CODES['10'],
+  ],
   [/rate limit|too many (calls|requests)|throttl/i, META_ERROR_CODES['4']],
-  [/not a valid whatsapp|recipient.*(not|isn't).*whatsapp|undeliverable/i, META_ERROR_CODES['131026']],
-  [/template.*(does not exist|not found)|template name does not exist/i, META_ERROR_CODES['132001']],
-  [/param(eter)?s?.*(mismatch|does not match)|number of (localizable_)?params/i, META_ERROR_CODES['132000']],
-  [/curl error|could not resolve host|connection (timed out|refused)|timeout/i, 'We could not reach WhatsApp just now. Please check your connection and try again.'],
-  [/sqlstate|exception|stack trace|undefined (index|offset|array key)|call to (a )?member function/i, 'Something went wrong on our side. Please try again, or contact support if it keeps happening.'],
+  [
+    /not a valid whatsapp|recipient.*(not|isn't).*whatsapp|undeliverable/i,
+    META_ERROR_CODES['131026'],
+  ],
+  [
+    /template.*(does not exist|not found)|template name does not exist/i,
+    META_ERROR_CODES['132001'],
+  ],
+  [
+    /param(eter)?s?.*(mismatch|does not match)|number of (localizable_)?params/i,
+    META_ERROR_CODES['132000'],
+  ],
+  [
+    /curl error|could not resolve host|connection (timed out|refused)|timeout/i,
+    'We could not reach WhatsApp just now. Please check your connection and try again.',
+  ],
+  [
+    /sqlstate|exception|stack trace|undefined (index|offset|array key)|call to (a )?member function/i,
+    'Something went wrong on our side. Please try again, or contact support if it keeps happening.',
+  ],
 ];
 
 /** Strings that look like raw provider/system output rather than a sentence for people. */
@@ -370,33 +405,6 @@ export function friendlyError(
   return message;
 }
 
-export function billingUrl(hint?: string): string {
-  // Prefer the install directory from the page (or the app-base meta tag). Ziggy's
-  // route() can run before that base is known and then returns the domain-root path.
-  const prefixed = appUrl('/app/settings/billing', hint);
-  try {
-    if (typeof route !== 'undefined') {
-      const resolved = String(route('app.billing.index') ?? '');
-      if (!resolved) return prefixed;
-      const base = appBase(hint);
-      if (!base) return resolved;
-      let path = resolved;
-      if (/^https?:\/\//i.test(resolved)) {
-        try {
-          path = new URL(resolved).pathname;
-        } catch {
-          return prefixed;
-        }
-      }
-      if (path === base || path.startsWith(`${base}/`)) return resolved;
-      return prefixed;
-    }
-  } catch {
-    // Route table is not ready yet.
-  }
-  return prefixed;
-}
-
 export interface FriendlyAction {
   label: string;
   href: string;
@@ -409,17 +417,15 @@ export function friendlyErrorAction(message: string | null | undefined): Friendl
     return null;
   }
 
-  if (/reconnect your whatsapp account|connect whatsapp|whatsapp account (is )?not connected/i.test(text)) {
+  if (
+    /reconnect your whatsapp account|connect whatsapp|whatsapp account (is )?not connected/i.test(
+      text
+    )
+  ) {
     return { label: 'Open WhatsApp account', href: appUrl('/app/connections') };
-  }
-  if (/upgrade|not (available|included) on your (current )?plan|plan limit|renew/i.test(text)) {
-    return { label: 'View plans', href: billingUrl() };
   }
   if (/approved template|send a template/i.test(text)) {
     return { label: 'Open templates', href: appUrl('/app/templates') };
-  }
-  if (/contact support|keeps happening/i.test(text)) {
-    return { label: 'Contact support', href: appUrl('/app/support') };
   }
 
   return null;

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Core\Billing\UsageService;
 use App\Core\Modules\ModuleRegistry;
-use App\Models\AccountIntegration;
 use App\Models\AccountUser;
 use App\Modules\Broadcasts\Models\Campaign;
 use App\Modules\Contacts\Models\ContactImportBatch;
@@ -117,13 +116,6 @@ class DashboardController extends Controller
             ->whereIn('status', ['sending', 'paused', 'completed'])
             ->where('failed_count', '>', 0)
             ->count();
-        $unhealthyIntegrations = AccountIntegration::where('account_id', $account->id)
-            ->where('status', 'connected')
-            ->where(function ($query) {
-                $query->whereNotIn('health', ['healthy', 'configured', 'ok'])
-                    ->orWhereNotNull('last_error');
-            })
-            ->count();
         $runningImports = ContactImportBatch::where('account_id', $account->id)
             ->whereIn('status', ['queued', 'processing'])
             ->count();
@@ -155,15 +147,6 @@ class DashboardController extends Controller
                 'count' => $rejectedTemplates,
                 'href' => route('app.whatsapp.templates.index'),
                 'cta' => 'Open templates',
-            ],
-            [
-                'key' => 'integration_health',
-                'severity' => $unhealthyIntegrations > 0 ? 'danger' : 'success',
-                'title' => $unhealthyIntegrations > 0 ? "{$unhealthyIntegrations} integrations need attention" : 'Integrations are working',
-                'body' => $unhealthyIntegrations > 0 ? 'Reconnect the app or check its sign-in details.' : 'All connected apps are working.',
-                'count' => $unhealthyIntegrations,
-                'href' => route('app.integrations.index'),
-                'cta' => 'Open integrations',
             ],
             [
                 'key' => 'contact_imports',

@@ -22,9 +22,8 @@ use App\Modules\WhatsApp\Models\WhatsAppContact;
 use App\Modules\WhatsApp\Models\WhatsAppConversation;
 use App\Modules\WhatsApp\Models\WhatsAppConversationAuditEvent;
 use App\Modules\WhatsApp\Models\WhatsAppConversationNote;
-use App\Modules\WhatsApp\Models\WhatsAppMetaEventLog;
 use App\Modules\WhatsApp\Models\WhatsAppMessage;
-use App\Modules\WhatsApp\Models\WhatsAppMessageBilling;
+use App\Modules\WhatsApp\Models\WhatsAppMetaEventLog;
 use App\Modules\WhatsApp\Models\WhatsAppTemplate;
 use App\Services\WorkspaceWebhookDispatcher;
 use App\Support\SchemaCache;
@@ -200,7 +199,7 @@ class WebhookProcessor
                     'WhatsApp webhook failed',
                     "Connection {$connection->name}: {$errorMessage}",
                     'critical',
-                    route('platform.system-health'),
+                    null,
                     ['connection_id' => $connection->id, 'account_id' => $connection->account_id, 'correlation_id' => $correlationId, 'dedupe_key' => 'connection_'.$connection->id]
                 );
             }

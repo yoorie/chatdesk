@@ -236,35 +236,6 @@ class PlatformSettingsService
     }
 
     /**
-     * Apply Google OAuth configuration from platform settings.
-     */
-    public function applyGoogleConfig(): void
-    {
-        $clientId = $this->getNonBlank('integrations.google_client_id', config('services.google.client_id'));
-        $clientSecret = $this->getNonBlank('integrations.google_client_secret', config('services.google.client_secret'));
-        $redirect = $this->getNonBlank('integrations.google_redirect_uri', config('services.google.redirect'));
-
-        if (! $redirect) {
-            $redirect = URL::to('/auth/google/callback');
-        }
-
-        config([
-            'services.google.client_id' => $clientId,
-            'services.google.client_secret' => $clientSecret,
-            'services.google.redirect' => $redirect,
-        ]);
-
-        $facebookAppId = $this->getNonBlank('whatsapp.meta_app_id', config('services.facebook.client_id'));
-        $facebookAppSecret = $this->getNonBlank('whatsapp.meta_app_secret', config('services.facebook.client_secret'));
-
-        config([
-            'services.facebook.client_id' => $facebookAppId,
-            'services.facebook.client_secret' => $facebookAppSecret,
-            'services.facebook.redirect' => URL::to('/app/integrations/meta-leads/oauth/callback'),
-        ]);
-    }
-
-    /**
      * Apply timezone and locale from platform settings.
      */
     public function applyLocalization(): void

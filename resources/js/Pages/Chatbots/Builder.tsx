@@ -139,8 +139,6 @@ export default function ChatbotBuilder({
         reminder_enabled: true,
         reminder_minutes_before: 30,
       };
-    if (type === 'sync_integration')
-      return { action_type: 'sync_integration', provider: 'meta-leads' };
     if (type === 'handoff')
       return {
         action_type: 'handoff',
@@ -148,24 +146,6 @@ export default function ChatbotBuilder({
         status: 'open',
         reason: 'Needs human help',
         agent_id: automationOptions.agents[0]?.id || '',
-      };
-    if (type === 'send_payment_link')
-      return {
-        action_type: 'send_payment_link',
-        create_razorpay_link: true,
-        payment_url: '',
-        amount: 0,
-        currency: 'INR',
-        message: 'Please complete your payment here: {{payment_url}}',
-      };
-    if (type === 'ai_agent_reply')
-      return {
-        action_type: 'ai_agent_reply',
-        agent_id: automationOptions.ai_agents?.[0]?.id || '',
-        agent_role: automationOptions.ai_agents?.[0]?.role || 'sales',
-        instruction:
-          `Reply as the best ${brandName()} sales/support AI agent and move the customer to the next step.`,
-        max_chars: 1500,
       };
 
     return {

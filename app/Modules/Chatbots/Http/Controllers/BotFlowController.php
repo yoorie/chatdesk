@@ -89,7 +89,7 @@ class BotFlowController extends Controller
                 }
 
                 $allowedNodeTypes = ['condition', 'action', 'delay', 'webhook'];
-                $allowedActionTypes = ['send_text', 'send_template', 'send_buttons', 'send_list', 'send_media', 'send_flow', 'assign_agent', 'add_tag', 'add_segment', 'update_contact', 'create_deal', 'create_appointment', 'sync_integration', 'set_status', 'set_priority', 'handoff', 'send_payment_link', 'ai_agent_reply'];
+                $allowedActionTypes = ['send_text', 'send_template', 'send_buttons', 'send_list', 'send_media', 'send_flow', 'assign_agent', 'add_tag', 'add_segment', 'update_contact', 'create_deal', 'create_appointment', 'set_status', 'set_priority', 'handoff'];
                 $allowedConditionTypes = ['text_contains', 'text_equals', 'text_starts_with', 'regex_match', 'time_window', 'connection_is', 'conversation_status', 'tags_contains'];
 
                 foreach ($nodes as $i => $node) {
@@ -176,12 +176,6 @@ class BotFlowController extends Controller
                                 $metaFlowId = isset($config['meta_flow_id']) ? trim((string) $config['meta_flow_id']) : '';
                                 if ((! is_numeric($flowId) || (int) $flowId <= 0) && $metaFlowId === '') {
                                     $validator->errors()->add("nodes.$i.config.flow_id", 'WhatsApp Flow ID is required for send_flow.');
-                                }
-                            }
-                            if ($actionType === 'sync_integration') {
-                                $provider = isset($config['provider']) ? trim((string) $config['provider']) : '';
-                                if ($provider === '') {
-                                    $validator->errors()->add("nodes.$i.config.provider", 'Integration provider is required for sync_integration.');
                                 }
                             }
                         }

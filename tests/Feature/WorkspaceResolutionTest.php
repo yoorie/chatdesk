@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Account;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,7 +20,7 @@ class WorkspaceResolutionTest extends TestCase
 
     public function test_owner_without_session_workspace_is_not_sent_to_onboarding(): void
     {
-        $account = $this->createAccountWithPlan('pro');
+        $account = $this->createAccountWithPlan('self-hosted');
         $owner = User::findOrFail($account->owner_id);
 
         $this->actingAs($owner)
@@ -32,9 +31,9 @@ class WorkspaceResolutionTest extends TestCase
 
     public function test_stale_session_workspace_falls_back_to_users_workspace(): void
     {
-        $account = $this->createAccountWithPlan('pro');
+        $account = $this->createAccountWithPlan('self-hosted');
         $owner = User::findOrFail($account->owner_id);
-        $otherAccount = $this->createAccountWithPlan('pro');
+        $otherAccount = $this->createAccountWithPlan('self-hosted');
 
         // Deleted workspace id and a workspace the user has no access to.
         foreach ([999999, $otherAccount->id] as $staleId) {
@@ -48,9 +47,9 @@ class WorkspaceResolutionTest extends TestCase
 
     public function test_member_workspace_is_restored_and_active_workspace_preferred(): void
     {
-        $suspended = $this->createAccountWithPlan('pro');
+        $suspended = $this->createAccountWithPlan('self-hosted');
         $suspended->update(['status' => 'suspended']);
-        $active = $this->createAccountWithPlan('pro');
+        $active = $this->createAccountWithPlan('self-hosted');
         $member = User::factory()->create();
         $suspended->users()->attach($member->id, ['role' => 'admin']);
         $active->users()->attach($member->id, ['role' => 'admin']);
@@ -60,5 +59,4 @@ class WorkspaceResolutionTest extends TestCase
             ->assertOk()
             ->assertSessionHas('current_account_id', $active->id);
     }
-
 }

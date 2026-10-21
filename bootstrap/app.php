@@ -62,7 +62,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhooks.enabled' => \App\Http\Middleware\EnsureWebhooksEnabled::class,
             'public-api.enabled' => \App\Http\Middleware\EnsurePublicApiEnabled::class,
             'public-api.auth' => \App\Http\Middleware\AuthenticatePublicApiKey::class,
-            'mobile.auth' => \App\Http\Middleware\AuthenticateMobileToken::class,
             'log.api' => \App\Http\Middleware\LogApiRequests::class,
             'restrict.chat.agent' => \App\Http\Middleware\RestrictChatAgentAccess::class,
         ]);

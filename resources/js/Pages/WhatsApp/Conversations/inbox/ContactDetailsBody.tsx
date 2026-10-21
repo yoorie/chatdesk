@@ -1,18 +1,14 @@
 import { friendlyStatus } from '@/lib/friendly';
 import { Badge } from '@/Components/UI/Badge';
 import Button from '@/Components/UI/Button';
-import { EmptyState } from '@/Components/UI/EmptyState';
-import { ExternalLink, Plus, RotateCcw, ShoppingBag } from 'lucide-react';
+import { ExternalLink, Plus, RotateCcw } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 import { ContactGalleryPanel } from './ContactGalleryPanel';
 import { contactDisplayPhone, INBOX_LABELS, labelClasses } from './helpers';
-import { InboxCallingPanel } from './InboxCallingPanel';
 import {
   type ChatMessage,
   type ContactGallery,
   type Conversation,
-  type InboxCallingSettings,
-  type InboxCallRecord,
   type MediaPreview,
 } from './types';
 
@@ -32,9 +28,6 @@ interface Props {
   activeGallery: ContactGallery;
   galleryLoadingId: number | null;
   setMediaPreview: Dispatch<SetStateAction<MediaPreview | null>>;
-  whatsappCalling: InboxCallingSettings;
-  activeCalls: InboxCallRecord[];
-  callingReady: boolean;
   activeInboundCount: number;
   lastInboundAt: string | null;
   activeOutboundCount: number;
@@ -57,9 +50,6 @@ export function ContactDetailsBody({
   activeGallery,
   galleryLoadingId,
   setMediaPreview,
-  whatsappCalling,
-  activeCalls,
-  callingReady,
   activeInboundCount,
   lastInboundAt,
   activeOutboundCount,
@@ -121,9 +111,7 @@ export function ContactDetailsBody({
               </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-ui-text-muted dark:text-ui-dark-text-muted">
-                Contact status
-              </dt>
+              <dt className="text-ui-text-muted dark:text-ui-dark-text-muted">Contact status</dt>
               <dd className="font-medium capitalize text-ui-text dark:text-ui-dark-text">
                 {activeConversation.contact.status || 'active'}
               </dd>
@@ -138,9 +126,7 @@ export function ContactDetailsBody({
             </div>
             <div className="flex justify-between gap-3">
               <dt className="text-ui-text-muted dark:text-ui-dark-text-muted">Assigned</dt>
-              <dd className="font-medium text-ui-text dark:text-ui-dark-text">
-                {activeAgentName}
-              </dd>
+              <dd className="font-medium text-ui-text dark:text-ui-dark-text">{activeAgentName}</dd>
             </div>
             <div className="flex justify-between gap-3">
               <dt className="text-ui-text-muted dark:text-ui-dark-text-muted">Channel</dt>
@@ -149,17 +135,13 @@ export function ContactDetailsBody({
               </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-ui-text-muted dark:text-ui-dark-text-muted">
-                Messages received
-              </dt>
+              <dt className="text-ui-text-muted dark:text-ui-dark-text-muted">Messages received</dt>
               <dd className="font-medium text-ui-text dark:text-ui-dark-text">
                 {activeInboundCount}
               </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-ui-text-muted dark:text-ui-dark-text-muted">
-                Messages sent
-              </dt>
+              <dt className="text-ui-text-muted dark:text-ui-dark-text-muted">Messages sent</dt>
               <dd className="font-medium text-ui-text dark:text-ui-dark-text">
                 {activeOutboundCount}
               </dd>
@@ -171,9 +153,7 @@ export function ContactDetailsBody({
               </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-ui-text-muted dark:text-ui-dark-text-muted">
-                Last activity
-              </dt>
+              <dt className="text-ui-text-muted dark:text-ui-dark-text-muted">Last activity</dt>
               <dd className="text-right font-medium text-ui-text dark:text-ui-dark-text">
                 {activeConversation.last_message_at
                   ? new Date(activeConversation.last_message_at).toLocaleString()
@@ -298,14 +278,6 @@ export function ContactDetailsBody({
           }}
         />
       )}
-      {contactTab === 'calls' && (
-        <InboxCallingPanel
-          conversation={activeConversation}
-          calling={whatsappCalling}
-          calls={activeCalls}
-          callingReady={callingReady}
-        />
-      )}
       {contactTab === 'activity' && (
         <div className="space-y-4 text-xs">
           {[
@@ -325,24 +297,13 @@ export function ContactDetailsBody({
                 <RotateCcw className="h-3 w-3" />
               </span>
               <div>
-                <div className="font-medium text-ui-text dark:text-ui-dark-text">
-                  {item}
-                </div>
+                <div className="font-medium text-ui-text dark:text-ui-dark-text">{item}</div>
                 <div className="text-ui-text-muted dark:text-ui-dark-text-muted">
                   {time ? new Date(String(time)).toLocaleString() : '-'}
                 </div>
               </div>
             </div>
           ))}
-        </div>
-      )}
-      {contactTab === 'orders' && (
-        <div className="space-y-2">
-          <EmptyState
-            icon={ShoppingBag}
-            title="No linked orders"
-            description="Orders will appear here when ecommerce integrations attach order metadata to this contact."
-          />
         </div>
       )}
     </div>

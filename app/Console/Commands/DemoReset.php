@@ -2,9 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Hash;
 
 class DemoReset extends Command
 {
@@ -34,13 +32,6 @@ class DemoReset extends Command
         // AI switch that was off and a landing page with the logo row on.
         // Re-apply the preview defaults after that restore.
         \Database\Seeders\DemoSeeder::applyPreviewDefaults();
-
-        User::updateOrCreate(['email' => config('demo.admin_email')], [
-            'name' => 'Super Admin',
-            'password' => Hash::make((string) config('demo.admin_password')),
-            'is_platform_admin' => true,
-            'email_verified_at' => now(),
-        ]);
 
         $this->info('Demo data reset.');
 

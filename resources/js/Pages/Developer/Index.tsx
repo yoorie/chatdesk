@@ -347,9 +347,7 @@ function KeysTab({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-ui-text dark:text-ui-dark-text">
-                      {key.name}
-                    </p>
+                    <p className="font-semibold text-ui-text dark:text-ui-dark-text">{key.name}</p>
                     {key.revokedAt && <Badge variant="danger">revoked</Badge>}
                   </div>
                   <p className="mt-1 font-mono text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
@@ -545,9 +543,7 @@ function WebhooksTab({
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="font-semibold text-ui-text dark:text-ui-dark-text">
-            Outgoing webhooks
-          </h3>
+          <h3 className="font-semibold text-ui-text dark:text-ui-dark-text">Outgoing webhooks</h3>
           <p className="mt-1 text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
             {brandName()} → your app. Send workspace events to your server, Zapier, or Make.
           </p>
@@ -947,14 +943,6 @@ export default function DeveloperIndex(props: Props) {
         <PageHeader
           title="Developer API"
           description="Connect your own software with API keys and event alerts."
-          actions={
-            <Link
-              href={route('docs')}
-              className="text-sm font-medium text-ui-green-dark hover:underline dark:text-emerald-300"
-            >
-              API guide ↗
-            </Link>
-          }
         />
         <nav
           aria-label="Developer sections"

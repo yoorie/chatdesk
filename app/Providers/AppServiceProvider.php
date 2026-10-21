@@ -28,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        WhatsAppConnection::class => WhatsAppConnectionPolicy::class,];
+        WhatsAppConnection::class => WhatsAppConnectionPolicy::class, ];
 
     /**
      * Register any application services.
@@ -36,11 +36,6 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(\App\Services\PlatformSettingStore::class);
-
-        // Register BillingProviderManager as singleton
-        $this->app->singleton(\App\Core\Billing\BillingProviderManager::class, function ($app) {
-            return new \App\Core\Billing\BillingProviderManager;
-        });
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -56,12 +51,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Open-source edition: some views and mails still mention pages that only exist in
-        // ChatDesk paid plans / Zyptos. Send those links to the dashboard instead of failing.
-        \Illuminate\Support\Facades\URL::resolveMissingNamedRoutesUsing(
-            fn (string $name) => \Illuminate\Support\Facades\Route::has('app.dashboard') ? url('/app/dashboard') : url('/')
-        );
-
         if (config('demo.enabled')) {
             // Demo sites never send real email, WhatsApp messages or payments.
             \Illuminate\Support\Facades\Event::listen(\Illuminate\Mail\Events\MessageSending::class, fn () => false);
@@ -95,7 +84,6 @@ class AppServiceProvider extends ServiceProvider
                     $settingsService->applyMailConfig();
                     $settingsService->applyPusherConfig();
                     $settingsService->applyWhatsAppConfig();
-                    $settingsService->applyGoogleConfig();
                 } catch (\Throwable $exception) {
                     \Log::warning('Failed to apply platform settings during console bootstrap', [
                         'error' => $exception->getMessage(),

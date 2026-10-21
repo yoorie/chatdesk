@@ -138,7 +138,7 @@ class PublicApiTest extends TestCase
             ]),
         ]);
 
-        $account = $this->createAccountWithPlan('starter');
+        $account = $this->createAccountWithPlan('self-hosted');
         $connection = WhatsAppConnection::factory()->create([
             'account_id' => $account->id,
         ]);
@@ -169,7 +169,7 @@ class PublicApiTest extends TestCase
                 ->push(['messages' => [['id' => 'wamid.list']]]),
         ]);
 
-        $account = $this->createAccountWithPlan('starter');
+        $account = $this->createAccountWithPlan('self-hosted');
         $connection = WhatsAppConnection::factory()->create([
             'account_id' => $account->id,
         ]);

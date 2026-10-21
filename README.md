@@ -65,16 +65,19 @@ admin and as many team users and agents as you need. Your data stays on your ser
 
 ## Screenshots
 
-> Screenshots are from ChatDesk. A few sidebar items in them (for example AI assistant, Analytics,
-> Calls) are paid-plan features and are not in this open-source edition.
+Taken from a local install with fictional demo data (`php artisan db:seed --class=DemoSeeder`).
 
-| Inbox | Dashboard |
+| Dashboard | Inbox |
 | --- | --- |
-| ![Inbox](docs/screenshots/02-inbox.png) | ![Dashboard](docs/screenshots/01-dashboard.png) |
-| **Campaigns** | **Templates** |
-| ![Campaigns](docs/screenshots/04-campaigns.png) | ![Templates](docs/screenshots/06-templates.png) |
-| **Contacts** | **Chatbot flow builder** |
-| ![Contacts](docs/screenshots/03-contacts.png) | ![Flow builder](docs/screenshots/07-flow-builder.png) |
+| ![Dashboard](docs/screenshots/01-dashboard.png) | ![Inbox](docs/screenshots/02-inbox.png) |
+| **Contacts** | **Templates** |
+| ![Contacts](docs/screenshots/03-contacts.png) | ![Templates](docs/screenshots/04-templates.png) |
+| **Campaign builder** | **Campaign stats** |
+| ![Campaign builder](docs/screenshots/05-campaign-builder.png) | ![Campaign stats](docs/screenshots/06-campaign-stats.png) |
+| **Chatbot flow builder** | **WhatsApp connection** |
+| ![Flow builder](docs/screenshots/07-flow-builder.png) | ![WhatsApp connection](docs/screenshots/08-whatsapp-connection.png) |
+| **Team** | |
+| ![Team](docs/screenshots/09-team.png) | |
 
 ## Open source vs ChatDesk paid plans / Zyptos
 
@@ -114,9 +117,11 @@ cp .env.example .env            # set APP_URL, DB_* and META_APP_SECRET
 composer install --no-dev --optimize-autoloader
 npm ci && npm run build
 php artisan key:generate
-php artisan migrate --seed
+php artisan migrate --seed     # also marks the install done, so /install/ is skipped
 php artisan storage:link
 ```
+
+Prefer a browser? Skip `key:generate` and `migrate --seed` and open `https://your-domain/install/` instead.
 
 Open your site and **register: the first account becomes the admin** and creates your organisation.
 After that, registration closes and new people join through **Team → Invite**.
@@ -152,7 +157,7 @@ Then follow **[Connect your WhatsApp number](docs/connect-whatsapp.md)**.
    Set `QUEUE_SCHEDULED_WORKER=false` in `.env` when a dedicated worker is running.
 4. Docker: see [`docker/`](docker/) for a `Dockerfile` and `docker-compose.yml`.
 
-Full documentation: **https://demo.yoorie.com/chatdesk/docs/**
+More guides are in [`docs/`](docs/).
 
 ## Development
 

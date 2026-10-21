@@ -50,3 +50,4 @@ voice-bridge/.env
 /release-tools/.keys/
 *.secret
 chatdesk-ed25519.key
+/storage/installed

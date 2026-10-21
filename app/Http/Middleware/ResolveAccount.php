@@ -33,7 +33,11 @@ class ResolveAccount
                 abort(403, 'You do not have access to this account');
             }
 
-            return redirect()->route('onboarding');
+            \Illuminate\Support\Facades\Auth::guard('web')->logout();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Your user is not part of this organisation yet. Ask an admin to invite you.',
+            ]);
         }
 
         $request->attributes->set('account', $account);

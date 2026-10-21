@@ -1,16 +1,6 @@
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
-import {
-  Building2,
-  Code2,
-  CreditCard,
-  History,
-  Link2,
-  LucideIcon,
-  Plug,
-  Settings,
-  Users,
-} from 'lucide-react';
+import { Code2, History, Link2, LucideIcon, Settings, Users } from 'lucide-react';
 
 export interface SettingsNavLink {
   key: string;

@@ -10,33 +10,6 @@
             $platformName = $brandingService->getPlatformName() ?: config('app.name', 'ChatDesk');
             $googleAnalyticsEnabled = (bool) \App\Models\PlatformSetting::get('analytics.google_analytics_enabled', false);
             $googleAnalyticsId = trim((string) \App\Models\PlatformSetting::get('analytics.google_analytics_id', ''));
-            $seoRouteMap = [
-                'landing' => 'landing',
-                'pricing' => 'pricing',
-                'privacy' => 'privacy',
-                'terms' => 'terms',
-                'refund.policy' => 'refund',
-                'acceptable.use' => 'acceptableUse',
-                'gdpr' => 'gdpr',
-                'cookies' => 'cookies',
-                'security' => 'security',
-                'help' => 'help',
-                'faqs' => 'faqs',
-                'knowledgebase' => 'knowledgebase',
-                'roadmap' => 'roadmap',
-                'docs' => 'docs',
-                'about' => 'about',
-                'contact' => 'contact',
-            ];
-            $seoPayload = null;
-            $seoKey = $seoRouteMap[\Illuminate\Support\Facades\Route::currentRouteName()] ?? null;
-            if ($seoKey) {
-                try {
-                    $seoPayload = app(\App\Services\SeoService::class)->page($seoKey);
-                } catch (\Throwable $e) {
-                    $seoPayload = null;
-                }
-            }
         @endphp
         <script>window.__APP_BRAND__ = @json($platformName);</script>
         <style>
@@ -47,32 +20,10 @@
         </style>
         @inertiaHead
         @if(!isset($__inertiaSsrResponse) || !$__inertiaSsrResponse || !str_contains($__inertiaSsrResponse->head, '<title'))
-            <title inertia>{{ $seoPayload['title'] ?? $platformName }}</title>
+            <title inertia>{{ $platformName }}</title>
         @endif
 
-        @if($seoPayload)
-            <meta name="description" content="{{ $seoPayload['description'] }}">
-            @if(! empty($seoPayload['keywords']))
-                <meta name="keywords" content="{{ $seoPayload['keywords'] }}">
-            @endif
-            <meta name="robots" content="{{ $seoPayload['robots'] }}">
-            <link rel="canonical" href="{{ $seoPayload['canonical'] }}">
-            <meta property="og:type" content="{{ $seoPayload['type'] ?? 'website' }}">
-            <meta property="og:title" content="{{ $seoPayload['title'] }}">
-            <meta property="og:description" content="{{ $seoPayload['description'] }}">
-            <meta property="og:url" content="{{ $seoPayload['url'] }}">
-            <meta property="og:site_name" content="{{ $seoPayload['site_name'] }}">
-            <meta property="og:locale" content="{{ $seoPayload['locale'] }}">
-            <meta property="og:image" content="{{ $seoPayload['image'] }}">
-            <meta property="og:image:alt" content="{{ $seoPayload['site_name'] }} product preview">
-            <meta name="twitter:card" content="{{ $seoPayload['twitter_card'] ?? 'summary_large_image' }}">
-            <meta name="twitter:title" content="{{ $seoPayload['title'] }}">
-            <meta name="twitter:description" content="{{ $seoPayload['description'] }}">
-            <meta name="twitter:image" content="{{ $seoPayload['image'] }}">
-            @foreach($seoPayload['schemas'] ?? [] as $index => $schema)
-                <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
-            @endforeach
-        @endif
+        <meta name="robots" content="noindex,nofollow">
 
         @if($googleAnalyticsEnabled && $googleAnalyticsId !== '')
             <!-- Google tag (gtag.js) -->

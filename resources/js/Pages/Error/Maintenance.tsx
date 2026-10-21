@@ -1,6 +1,5 @@
-import { pathIncludes } from '@/lib/appUrl';
-import { Head, usePage } from '@inertiajs/react';
-import { LogIn, Settings, Wrench } from 'lucide-react';
+import { Head } from '@inertiajs/react';
+import { LogIn, Wrench } from 'lucide-react';
 import ErrorFrame from './ErrorFrame';
 
 interface MaintenanceProps {
@@ -8,9 +7,6 @@ interface MaintenanceProps {
 }
 
 export default function Maintenance({ message }: MaintenanceProps) {
-  const isPlatform = pathIncludes(usePage().url, '/platform');
-  const platformHref =
-    typeof route !== 'undefined' ? route('platform.settings') : '/platform/settings';
   const loginHref = typeof route !== 'undefined' ? route('login') : '/login';
 
   return (
@@ -26,9 +22,9 @@ export default function Maintenance({ message }: MaintenanceProps) {
         accent="amber"
         actions={[
           {
-            label: isPlatform ? 'Platform settings' : 'Admin login',
-            href: isPlatform ? platformHref : loginHref,
-            icon: isPlatform ? Settings : LogIn,
+            label: 'Admin login',
+            href: loginHref,
+            icon: LogIn,
             primary: true,
           },
           {

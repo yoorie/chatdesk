@@ -15,7 +15,7 @@ class SeederSafetyTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $this->seed(DatabaseSeeder::class);
         $this->assertDatabaseCount('users', 0);
-        $this->assertDatabaseHas('plans', ['key' => 'starter']);
+        $this->assertDatabaseHas('plans', ['key' => 'self-hosted']);
         $this->assertDatabaseHas('modules', ['key' => 'automation.chatbots']);
     }
 }

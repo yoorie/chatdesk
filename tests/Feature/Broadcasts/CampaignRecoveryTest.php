@@ -28,7 +28,7 @@ class CampaignRecoveryTest extends TestCase
     {
         Queue::fake();
 
-        $account = $this->createAccountWithPlan('pro');
+        $account = $this->createAccountWithPlan('self-hosted');
         $connection = WhatsAppConnection::factory()->create([
             'account_id' => $account->id,
             'webhook_last_error' => null,
@@ -66,7 +66,7 @@ class CampaignRecoveryTest extends TestCase
     {
         Queue::fake();
 
-        $account = $this->createAccountWithPlan('pro');
+        $account = $this->createAccountWithPlan('self-hosted');
         $connection = WhatsAppConnection::factory()->create([
             'account_id' => $account->id,
         ]);
@@ -101,7 +101,7 @@ class CampaignRecoveryTest extends TestCase
 
     public function test_campaign_webhook_status_updates_only_matching_recipient(): void
     {
-        $account = $this->createAccountWithPlan('pro');
+        $account = $this->createAccountWithPlan('self-hosted');
         $connection = WhatsAppConnection::factory()->create([
             'account_id' => $account->id,
         ]);
@@ -152,7 +152,7 @@ class CampaignRecoveryTest extends TestCase
 
     public function test_campaign_status_progression_clears_stale_failure_fields(): void
     {
-        $account = $this->createAccountWithPlan('pro');
+        $account = $this->createAccountWithPlan('self-hosted');
         $connection = WhatsAppConnection::factory()->create([
             'account_id' => $account->id,
         ]);

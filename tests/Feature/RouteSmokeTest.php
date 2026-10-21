@@ -20,7 +20,7 @@ class RouteSmokeTest extends TestCase
 
     public function test_core_user_pages_render_for_workspace_owner(): void
     {
-        $account = $this->createAccountWithPlan('starter');
+        $account = $this->createAccountWithPlan('self-hosted');
         $this->actingAsAccountOwner($account);
         WhatsAppConnection::factory()->create([
             'account_id' => $account->id,
@@ -46,5 +46,4 @@ class RouteSmokeTest extends TestCase
                 ->assertInertia(fn ($page) => $page->component($component));
         }
     }
-
 }

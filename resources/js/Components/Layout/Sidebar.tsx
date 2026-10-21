@@ -1,7 +1,6 @@
 import BrandLogo from '@/Components/Branding/BrandLogo';
-import { billingUrl } from '@/lib/friendly';
 import { cn } from '@/lib/utils';
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
   Activity,
   BarChart3,
@@ -10,7 +9,6 @@ import {
   Building2,
   Calendar,
   CalendarRange,
-  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -32,7 +30,6 @@ import {
   LifeBuoy,
   Link2,
   List,
-  Lock,
   LucideIcon,
   Megaphone,
   MessageCircle,
@@ -151,7 +148,6 @@ const navPlacement: Record<
     icon: 'MessageCircle',
     label: 'Inbox',
   },
-  'app.whatsapp-calls.index': { section: 'Main', order: 25, icon: 'PhoneCall', label: 'Calls' },
 
   'app.contacts.index': { section: 'Main', order: 30, icon: 'Users', label: 'Contacts' },
   'app.contacts.segments.index': {
@@ -161,16 +157,8 @@ const navPlacement: Record<
     label: 'Segments',
   },
   'app.contacts.tags.index': { section: 'Audience', order: 30, icon: 'Tag', label: 'Tags' },
-  'app.meta-leads.index': { section: 'Audience', order: 40, icon: 'Target', label: 'Ad leads' },
-  'app.appointments.index': {
-    section: 'Audience',
-    order: 50,
-    icon: 'Calendar',
-    label: 'Appointments',
-  },
 
   'app.broadcasts.index': { section: 'Main', order: 40, icon: 'Megaphone', label: 'Campaigns' },
-  'app.analytics.index': { section: 'Main', order: 50, icon: 'BarChart3', label: 'Analytics' },
 
   'app.whatsapp.templates.index': {
     section: 'Messages',
@@ -196,17 +184,8 @@ const navPlacement: Record<
     icon: 'GitBranch',
     label: 'WhatsApp forms',
   },
-  'app.media-library.index': {
-    section: 'Messages',
-    order: 50,
-    icon: 'Image',
-    label: 'Media',
-  },
 
   'app.chatbots.index': { section: 'Automation', order: 10, icon: 'Workflow', label: 'Chatbots' },
-  'app.ai.index': { section: 'Automation', order: 20, icon: 'Sparkles', label: 'AI assistant' },
-  'app.floaters': { section: 'Automation', order: 30, icon: 'Layout', label: 'Website widget' },
-  'app.modules': { section: 'Automation', order: 40, icon: 'Wrench', label: 'Tools' },
 
   'app.whatsapp.connections.index': {
     section: 'Settings',
@@ -214,61 +193,8 @@ const navPlacement: Record<
     icon: 'Link2',
     label: 'WhatsApp account',
   },
-  'app.integrations.index': { section: 'Settings', order: 20, icon: 'Plug', label: 'Integrations' },
   'app.team.index': { section: 'Settings', order: 30, icon: 'Users', label: 'Team' },
-  'app.billing.index': { section: 'Settings', order: 40, icon: 'CreditCard', label: 'Billing' },
   'app.settings': { section: 'Settings', order: 50, icon: 'Settings', label: 'Settings' },
-
-  'platform.dashboard': { section: 'Platform', order: 10, icon: 'Shield', label: 'Platform admin' },
-  'platform.accounts.index': {
-    section: 'Platform',
-    order: 20,
-    icon: 'Building2',
-    label: 'Tenants',
-  },
-  'platform.users.index': { section: 'Platform', order: 30, icon: 'Users', label: 'Users' },
-  'platform.plans.index': { section: 'Platform', order: 40, icon: 'CreditCard', label: 'Plans' },
-  'platform.modules.index': { section: 'Platform', order: 50, icon: 'Puzzle', label: 'Modules' },
-  'platform.subscriptions.index': {
-    section: 'Platform',
-    order: 60,
-    icon: 'FileText',
-    label: 'Subscriptions',
-  },
-  'platform.discounts.index': { section: 'Platform', order: 70, icon: 'Tag', label: 'Discounts' },
-  'platform.transactions.index': {
-    section: 'Platform',
-    order: 80,
-    icon: 'CreditCard',
-    label: 'Transactions',
-  },
-  'platform.analytics': { section: 'Platform', order: 90, icon: 'BarChart3', label: 'Analytics' },
-  'platform.templates.index': {
-    section: 'Platform',
-    order: 100,
-    icon: 'FileText',
-    label: 'Templates',
-  },
-  'platform.support.index': { section: 'Platform', order: 110, icon: 'LifeBuoy', label: 'Support' },
-  'platform.activity-logs': {
-    section: 'Platform',
-    order: 120,
-    icon: 'History',
-    label: 'Audit logs',
-  },
-  'platform.system-health': {
-    section: 'Platform',
-    order: 130,
-    icon: 'Shield',
-    label: 'System health',
-  },
-  'platform.system-update': {
-    section: 'Platform',
-    order: 135,
-    icon: 'RefreshCw',
-    label: 'System update',
-  },
-  'platform.settings': { section: 'Platform', order: 140, icon: 'Settings', label: 'Settings' },
 };
 
 const hiddenUntilRealImplementation = new Set([
@@ -283,11 +209,9 @@ const hiddenUntilRealImplementation = new Set([
  * the top bar bell covers notifications, and the footer links to support.
  */
 const reachableElsewhere = new Set([
-  'app.workspaces.index',
   'app.activity-logs',
   'app.developer.index',
   'app.notifications.index',
-  'app.support.index',
 ]);
 
 interface LockedNavItem extends NavItem {
@@ -302,8 +226,7 @@ export function Sidebar({
   onClose,
   onCollapseChange,
 }: SidebarProps) {
-  const { auth, inbox_summary, locked_navigation, workspaces, accounts, workspace, ziggy } =
-    usePage().props as any;
+  const { auth, inbox_summary, locked_navigation } = usePage().props as any;
   const lockedNavigation: LockedNavItem[] = Array.isArray(locked_navigation)
     ? locked_navigation
     : [];
@@ -311,13 +234,6 @@ export function Sidebar({
   const inboxUnread = Number(inbox_summary?.unread || 0);
   const [collapsed, setCollapsed] = useState(false);
   const [foldedSections, setFoldedSections] = useState<string[]>([]);
-  const workspaceList: WorkspaceOption[] = Array.isArray(workspaces)
-    ? workspaces
-    : Array.isArray(accounts)
-      ? accounts
-      : [];
-  const currentWorkspace = workspace || account;
-  const showWorkspaceSwitcher = Boolean(currentWorkspace && !user?.is_super_admin);
 
   useEffect(() => {
     try {
@@ -366,7 +282,7 @@ export function Sidebar({
     return tryRouteHref(`${routeName}.index`);
   };
 
-  const supportHref = tryRouteHref('app.support.index') || tryRouteHref('help') || '/help';
+  const supportHref = 'https://github.com/yoorie/chatdesk/issues';
   const profileHref = tryRouteHref('app.settings')
     ? `${tryRouteHref('app.settings')}?tab=profile`
     : '#';
@@ -399,37 +315,6 @@ export function Sidebar({
       !hiddenUntilRealImplementation.has(item.href) &&
       !safeNavigation.some((existing) => existing.href === item.href)
   );
-
-  if (auth?.user?.is_super_admin) {
-    [
-      'platform.dashboard',
-      'platform.accounts.index',
-      'platform.users.index',
-      'platform.plans.index',
-      'platform.modules.index',
-      'platform.subscriptions.index',
-      'platform.discounts.index',
-      'platform.transactions.index',
-      'platform.analytics',
-      'platform.templates.index',
-      'platform.support.index',
-      'platform.notifications.index',
-      'platform.activity-logs',
-      'platform.system-health',
-      'platform.system-update',
-      'platform.settings',
-    ].forEach((href) => {
-      const placement = navPlacement[href];
-      if (placement && !safeNavigation.some((item) => item.href === href)) {
-        safeNavigation.push({
-          label: placement.label || href,
-          href,
-          icon: placement.icon || 'Shield',
-          group: 'Platform',
-        });
-      }
-    });
-  }
 
   type PlacedItem = NavItem & { order: number; locked?: boolean; requiredPlan?: string | null };
   const sections = [
@@ -478,30 +363,6 @@ export function Sidebar({
 
   const renderNavItem = (item: PlacedItem, index: number) => {
     const Icon = iconMap[item.icon] || LayoutDashboard;
-
-    if (item.locked) {
-      const planName = item.requiredPlan || 'a higher plan';
-      return (
-        <Link
-          key={`${item.href}-locked-${index}`}
-          href={billingUrl(ziggy?.url)}
-          className={cn(
-            'group relative flex h-8 items-center gap-2.5 rounded-md text-[13px] text-white/40 transition-colors hover:bg-white/5 hover:text-white/75',
-            collapsed ? 'px-2.5 lg:justify-center lg:px-0' : 'px-2.5'
-          )}
-          title={`${item.label} is available on ${planName}. Upgrade to use it.`}
-        >
-          <Icon className="h-4 w-4 shrink-0 text-white/30" />
-          <span className={cn('flex-1 truncate font-medium', collapsed ? 'lg:hidden' : '')}>
-            {item.label}
-          </span>
-          <Lock
-            className={cn('h-3 w-3 shrink-0 text-white/40', collapsed ? 'lg:hidden' : '')}
-            aria-hidden
-          />
-        </Link>
-      );
-    }
 
     const resolved = resolveRouteHref(item.href);
     const unreadCount = item.href === 'app.whatsapp.conversations.index' ? inboxUnread : 0;
@@ -670,25 +531,21 @@ export function Sidebar({
         </Link>
       )}
       {!auth?.user?.is_super_admin && (
-        <Link
+        <a
           href={supportHref}
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/5 hover:text-white"
           title="Help & support"
           aria-label="Help & support"
         >
           <LifeBuoy className="h-4 w-4" />
-        </Link>
+        </a>
       )}
     </div>
   );
 
-  const workspaceSwitcher = showWorkspaceSwitcher ? (
-    <SidebarWorkspaceSwitcher
-      currentWorkspace={currentWorkspace}
-      workspaceList={workspaceList}
-      collapsed={collapsed}
-    />
-  ) : null;
+  const workspaceSwitcher = null;
 
   return (
     <>
@@ -756,115 +613,5 @@ export function Sidebar({
         {sidebarFooter}
       </aside>
     </>
-  );
-}
-
-interface WorkspaceOption {
-  id: number | string;
-  name?: string;
-  workspace_type_label?: string | null;
-  workspace_type?: string | null;
-  industry?: string | null;
-}
-
-function SidebarWorkspaceSwitcher({
-  currentWorkspace,
-  workspaceList,
-  collapsed,
-}: {
-  currentWorkspace: WorkspaceOption;
-  workspaceList: WorkspaceOption[];
-  collapsed: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const initial = (name?: string) => name?.charAt(0)?.toUpperCase() || 'W';
-  let manageHref: string | null = null;
-  try {
-    manageHref = route('app.workspaces.index');
-  } catch {
-    manageHref = null;
-  }
-
-  return (
-    <div className={cn('relative flex-shrink-0 px-2 pb-1', collapsed ? 'lg:px-2' : '')}>
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        aria-label="Switch workspace"
-        aria-expanded={open}
-        title={collapsed ? currentWorkspace?.name || 'Workspace' : undefined}
-        className={cn(
-          'flex h-9 w-full items-center gap-2 rounded-md bg-white/5 px-2 text-left ring-1 ring-white/10 transition-colors hover:bg-white/10',
-          collapsed ? 'lg:justify-center lg:px-0' : ''
-        )}
-      >
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-ui-green text-[10px] font-bold text-white">
-          {initial(currentWorkspace?.name)}
-        </span>
-        <span
-          className={cn(
-            'min-w-0 flex-1 truncate text-[13px] font-medium text-white',
-            collapsed ? 'lg:hidden' : ''
-          )}
-        >
-          {currentWorkspace?.name || 'Workspace'}
-        </span>
-        <ChevronsUpDown
-          className={cn('h-3.5 w-3.5 shrink-0 text-white/45', collapsed ? 'lg:hidden' : '')}
-        />
-      </button>
-
-      {open && (
-        <>
-          <div className="fixed inset-0 z-[125]" onClick={() => setOpen(false)} />
-          <div
-            className={cn(
-              'absolute top-10 z-[140] w-60 overflow-hidden rounded-card border border-gray-100 bg-white text-ui-text shadow-pop dark:border-ui-dark-border dark:bg-ui-dark-surface dark:text-ui-dark-text',
-              collapsed ? 'left-2 lg:left-12 lg:top-0' : 'left-2'
-            )}
-          >
-            <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-ui-text-muted dark:text-ui-dark-text-muted">
-              Workspaces
-            </p>
-            <div className="max-h-64 overflow-y-auto pb-1">
-              {workspaceList.map((item) => {
-                const isCurrent = item.id === currentWorkspace?.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setOpen(false);
-                      if (!isCurrent) {
-                        router.post(route('app.accounts.switch', { account: item.id }));
-                      }
-                    }}
-                    className={cn(
-                      'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors hover:bg-gray-50 dark:hover:bg-ui-dark-surface-2',
-                      isCurrent && 'bg-ui-green/5'
-                    )}
-                  >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-ui-green text-[10px] font-bold text-white">
-                      {initial(item.name)}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate font-medium">{item.name}</span>
-                    {isCurrent && <Check className="h-4 w-4 shrink-0 text-ui-green" />}
-                  </button>
-                );
-              })}
-            </div>
-            {manageHref && (
-              <Link
-                href={manageHref}
-                className="flex items-center gap-2 border-t border-gray-100 px-3 py-2 text-sm font-medium text-ui-green-dark transition-colors hover:bg-ui-green/10 dark:border-ui-dark-border dark:text-emerald-200"
-              >
-                <Settings className="h-3.5 w-3.5" />
-                Manage workspaces
-              </Link>
-            )}
-          </div>
-        </>
-      )}
-    </div>
   );
 }

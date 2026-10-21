@@ -30,14 +30,12 @@ class RegisteredUserController extends Controller
         }
 
         return Inertia::render('Auth/Register', [
-            'selectedPlan' => null,
             'invite' => $invite ? [
                 'token' => $invite->token,
                 'email' => $invite->email,
                 'account_name' => $invite->account?->name,
                 'role' => $invite->role,
             ] : null,
-            'googleOAuthEnabled' => false,
         ]);
     }
 

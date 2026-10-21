@@ -7,7 +7,6 @@ use App\Core\Billing\PlanResolver;
 use App\Core\Billing\UsageService;
 use App\Http\Controllers\Controller;
 use App\Models\AccountCatalogProduct;
-use App\Models\AccountIntegration;
 use App\Models\AiAgent;
 use App\Models\AiSuggestionFeedback;
 use App\Models\AiUsageLog;
@@ -32,7 +31,6 @@ use App\Modules\WhatsApp\Models\WhatsAppTemplateSend;
 use App\Modules\WhatsApp\Services\TemplateComposer;
 use App\Modules\WhatsApp\Services\WhatsAppClient;
 use App\Services\AI\ConversationAssistantService;
-use App\Services\RazorpayPaymentLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -239,7 +237,7 @@ class ConversationController extends Controller
             'saved_buttons' => $this->savedButtonsForInbox($account),
             'saved_lists' => $this->savedListsForInbox($account),
             'saved_forms' => $this->savedFormsForInbox($account),
-            'ai_agents' => $this->inboxPresentation->activeAiAgentsForInbox($account),
+            'ai_agents' => [], // AI assistants are not part of the open-source edition.
             'ai_available' => $aiAvailable,
             'whatsapp_calling' => $this->inboxPresentation->callingSettingsForInbox($account),
             'recent_calls' => $this->inboxPresentation->recentCallsForInbox($account, collect($conversations->items())->pluck('contact.wa_id')->filter()->values()->all()),
@@ -2328,132 +2326,6 @@ class ConversationController extends Controller
 
             return response()->json(['message' => 'Failed to send link button.', 'error' => $e->getMessage()], 422);
         }
-    }
-
-    public function sendPaymentLink(Request $request, WhatsAppConversation $conversation, RazorpayPaymentLinkService $paymentLinks)
-    {
-        $account = $request->attributes->get('account') ?? current_account();
-
-        if (! account_ids_match($conversation->account_id, $account->id)) {
-            abort(404);
-        }
-
-        $validated = $request->validate([
-            'amount' => 'required|numeric|min:1|max:10000000',
-            'currency' => 'nullable|string|size:3',
-            'description' => 'nullable|string|max:255',
-            'body_text' => 'nullable|string|max:1024',
-            'display_text' => 'nullable|string|max:20',
-            'expire_after_days' => 'nullable|integer|min:1|max:365',
-        ]);
-
-        $this->ensureCustomerServiceWindowOpen($conversation);
-
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
-        $conversation->load(['connection', 'contact']);
-
-        $amountPaise = (int) round(((float) $validated['amount']) * 100);
-        $currency = strtoupper((string) ($validated['currency'] ?? 'INR'));
-        $description = trim((string) ($validated['description'] ?? 'WhatsApp payment request')) ?: 'WhatsApp payment request';
-        $expireAfterDays = (int) ($validated['expire_after_days'] ?? 0);
-
-        try {
-            $link = $paymentLinks->createForAccount($account, [
-                'amount' => $amountPaise,
-                'currency' => $currency,
-                'reference_id' => 'chat_'.$conversation->id.'_'.time(),
-                'description' => $description,
-                'customer_name' => $conversation->contact?->name ?: 'Customer',
-                'customer_phone' => $conversation->contact?->phone ?: $conversation->contact?->wa_id,
-                'customer_email' => $conversation->contact?->email,
-                'expire_by' => $expireAfterDays > 0 ? now()->addDays($expireAfterDays)->timestamp : null,
-                'notes' => [
-                    'source' => 'inbox_composer',
-                    'conversation_id' => (string) $conversation->id,
-                    'contact_id' => (string) ($conversation->contact?->id ?? ''),
-                ],
-            ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'message' => 'Payment link not created.',
-                'error' => $this->paymentLinkErrorMessage($request, $account, $e->getMessage()),
-            ], 422);
-        }
-
-        $url = (string) ($link['short_url'] ?? $link['url'] ?? '');
-        if ($url === '') {
-            return response()->json(['message' => 'Payment link not created.', 'error' => 'Razorpay did not return a payment URL.'], 422);
-        }
-
-        $bodyText = trim((string) ($validated['body_text'] ?? ''));
-        if ($bodyText === '') {
-            $bodyText = sprintf(
-                'Please complete your payment of %s %s using the button below.',
-                $currency,
-                number_format($amountPaise / 100, 2)
-            );
-        }
-
-        $request->merge([
-            'body_text' => $bodyText,
-            'display_text' => trim((string) ($validated['display_text'] ?? 'Pay now')) ?: 'Pay now',
-            'url' => $url,
-            'header_text' => null,
-            'footer_text' => $description,
-        ]);
-
-        $response = $this->sendCtaUrl($request, $conversation);
-
-        $metadata = is_array($conversation->metadata) ? $conversation->metadata : [];
-        $metadata['last_razorpay_payment_link'] = [
-            'id' => $link['id'] ?? null,
-            'short_url' => $url,
-            'amount' => $amountPaise,
-            'currency' => $currency,
-            'description' => $description,
-            'created_at' => now()->toIso8601String(),
-            'source' => 'inbox_composer',
-        ];
-        $conversation->forceFill(['metadata' => $metadata])->save();
-
-        return $response;
-    }
-
-    private function paymentLinkErrorMessage(Request $request, $account, string $message): string
-    {
-        if (! str_contains($message, 'Connect Razorpay Payments')) {
-            return $message;
-        }
-
-        $user = $request->user();
-        if (! $user) {
-            return $message;
-        }
-
-        $workspaceNames = AccountIntegration::query()
-            ->where('provider', 'razorpay-payments')
-            ->where('status', 'connected')
-            ->whereHas('account', function ($query) use ($user) {
-                $query->where('owner_id', $user->id)
-                    ->orWhereHas('users', fn ($users) => $users->where('users.id', $user->id));
-            })
-            ->with('account:id,name')
-            ->get()
-            ->map(fn (AccountIntegration $integration) => $integration->account?->name)
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-
-        if (! empty($workspaceNames)) {
-            return sprintf(
-                'Razorpay is not connected for the current workspace "%s". It is connected in: %s. Switch to that workspace/chat or connect Razorpay Payments here.',
-                $account->name,
-                implode(', ', $workspaceNames)
-            );
-        }
-
-        return $message;
     }
 
     public function sendContactCard(Request $request, WhatsAppConversation $conversation)

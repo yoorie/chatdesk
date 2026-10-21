@@ -1,11 +1,9 @@
 import { friendlyStatus } from '@/lib/friendly';
 import SettingsNav from '@/Components/Layout/SettingsNav';
 import TextInput from '@/Components/TextInput';
-import Button from '@/Components/UI/Button';
 import { Card, CardContent } from '@/Components/UI/Card';
 import { PageHeader, ThemedIconTile } from '@/Components/UI/Elements';
 import { EmptyState } from '@/Components/UI/EmptyState';
-import { useToast } from '@/hooks/useToast';
 import AppShell from '@/Layouts/AppShell';
 import { Head } from '@inertiajs/react';
 import {
@@ -14,7 +12,6 @@ import {
   Bot,
   CheckCircle2,
   Clock,
-  Download,
   FileText,
   Megaphone,
   MessageSquare,
@@ -84,7 +81,6 @@ function formatDate(value: string) {
 }
 
 export default function ActivityLogsIndex({ logs }: { account: any; logs: ActivityLog[] }) {
-  const { toast } = useToast();
   const [filter, setFilter] = useState('all');
   const [range, setRange] = useState('7d');
   const [search, setSearch] = useState('');

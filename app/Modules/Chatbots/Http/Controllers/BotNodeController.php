@@ -134,7 +134,7 @@ class BotNodeController extends Controller
 
             if ($type === 'action') {
                 $actionType = $config['action_type'] ?? null;
-                $allowed = ['send_text', 'send_template', 'send_buttons', 'send_list', 'send_media', 'send_flow', 'assign_agent', 'add_tag', 'add_segment', 'update_contact', 'create_deal', 'create_appointment', 'sync_integration', 'set_status', 'set_priority', 'handoff', 'send_payment_link', 'ai_agent_reply'];
+                $allowed = ['send_text', 'send_template', 'send_buttons', 'send_list', 'send_media', 'send_flow', 'assign_agent', 'add_tag', 'add_segment', 'update_contact', 'create_deal', 'create_appointment', 'set_status', 'set_priority', 'handoff'];
                 if (! $actionType || ! in_array($actionType, $allowed, true)) {
                     $validator->errors()->add('config.action_type', 'Invalid action type.');
                 }
@@ -154,13 +154,6 @@ class BotNodeController extends Controller
                     $listId = $config['list_id'] ?? null;
                     if (! is_numeric($listId) || (int) $listId <= 0) {
                         $validator->errors()->add('config.list_id', 'list_id is required for send_list.');
-                    }
-                }
-
-                if ($actionType === 'send_payment_link') {
-                    $paymentUrl = $config['payment_url'] ?? null;
-                    if (empty($config['create_razorpay_link']) && (! $paymentUrl || ! filter_var($paymentUrl, FILTER_VALIDATE_URL))) {
-                        $validator->errors()->add('config.payment_url', 'A valid payment URL is required.');
                     }
                 }
 
@@ -185,10 +178,6 @@ class BotNodeController extends Controller
                     if ((! is_numeric($segmentId) || (int) $segmentId <= 0) && $segmentName === '') {
                         $validator->errors()->add('config.segment_id', 'Segment ID or name is required.');
                     }
-                }
-
-                if ($actionType === 'sync_integration' && trim((string) ($config['provider'] ?? '')) === '') {
-                    $validator->errors()->add('config.provider', 'Integration provider is required.');
                 }
 
                 if ($actionType === 'create_deal' && trim((string) ($config['title'] ?? '')) === '') {

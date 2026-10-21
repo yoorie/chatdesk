@@ -83,35 +83,12 @@ class Account extends Model
         return $this->hasOne(Subscription::class);
     }
 
-    public function billingEvents(): HasMany
-    {
-        return $this->hasMany(BillingEvent::class);
-    }
-
-    /**
-     * Get account addons.
-     */
-    public function addons()
-    {
-        return $this->hasMany(AccountAddon::class)->where('status', 'active');
-    }
-
     /**
      * Get account usage records.
      */
     public function usage()
     {
         return $this->hasMany(AccountUsage::class);
-    }
-
-    public function wallet()
-    {
-        return $this->hasOne(AccountWallet::class);
-    }
-
-    public function walletTransactions()
-    {
-        return $this->hasMany(WalletTransaction::class);
     }
 
     public function integrations()
@@ -147,16 +124,6 @@ class Account extends Model
     public function mediaAssets()
     {
         return $this->hasMany(AccountMediaAsset::class);
-    }
-
-    public function ecommerceOrders()
-    {
-        return $this->hasMany(AccountEcommerceOrder::class);
-    }
-
-    public function surveys()
-    {
-        return $this->hasMany(AccountSurvey::class);
     }
 
     public function appointments()

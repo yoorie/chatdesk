@@ -64,7 +64,7 @@ class AccountRole extends Model
                 'id' => 'system-owner',
                 'name' => 'Owner',
                 'key' => 'owner',
-                'description' => 'Full workspace ownership and billing control.',
+                'description' => 'Full control of the organisation, its settings and team.',
                 'permissions' => $ownerPermissions,
                 'is_system' => true,
                 'is_owner' => true,

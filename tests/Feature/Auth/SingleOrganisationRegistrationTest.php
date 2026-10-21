@@ -56,7 +56,7 @@ class SingleOrganisationRegistrationTest extends TestCase
 
     public function test_invited_agent_can_join_the_organisation(): void
     {
-        $account = $this->createAccountWithPlan('starter');
+        $account = $this->createAccountWithPlan('self-hosted');
         $invitation = AccountInvitation::create([
             'account_id' => $account->id,
             'invited_by' => $account->owner_id,

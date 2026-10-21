@@ -25,12 +25,9 @@ class BotRuntime
         'update_contact',
         'create_deal',
         'create_appointment',
-        'sync_integration',
         'set_status',
         'set_priority',
         'handoff',
-        'send_payment_link',
-        'ai_agent_reply',
     ];
 
     public function __construct(
@@ -222,8 +219,6 @@ class BotRuntime
             'send_list',
             'send_media',
             'send_flow',
-            'send_payment_link',
-            'ai_agent_reply',
         ], true);
     }
 
@@ -1165,7 +1160,7 @@ class BotRuntime
                 'Workspace automation failed',
                 $e->getMessage(),
                 'warning',
-                route('platform.activity-logs', ['type' => 'billing_automation_failed']),
+                null,
                 ['execution_id' => $execution->id, 'account_id' => $execution->account_id, 'bot_id' => $execution->bot_id, 'dedupe_key' => 'account_'.$execution->account_id.'_bot_'.$execution->bot_id]
             );
         }

@@ -7,10 +7,6 @@ use App\Models\AccountApiRequestLog;
 use App\Models\AccountAppointment;
 use App\Models\AccountWebhookDelivery;
 use App\Models\AccountWebhookEndpoint;
-use App\Models\AiAgent;
-use App\Models\AiAgentRun;
-use App\Models\AiUsageLog;
-use App\Models\Plan;
 use App\Models\QuickReply;
 use App\Models\User;
 use App\Modules\Broadcasts\Models\Campaign;
@@ -32,7 +28,7 @@ use Illuminate\Support\Facades\Hash;
 
 /**
  * Sample workspace for a public preview: owner, agent, inbox, a spaced
- * chatbot, AI assistants, and developer keys. Passwords come from config/demo.php.
+ * chatbot and developer keys. Passwords come from config/demo.php.
  */
 class DemoInboxSeeder extends Seeder
 {
@@ -44,7 +40,6 @@ class DemoInboxSeeder extends Seeder
             (string) config('demo.user_password'),
             false
         );
-        $owner->forceFill(['ai_suggestions_enabled' => true])->save();
 
         $agent = $this->user(
             (string) config('demo.agent_email'),
@@ -53,22 +48,13 @@ class DemoInboxSeeder extends Seeder
             false
         );
 
-        $this->user(
-            (string) config('demo.admin_email'),
-            'Super Admin',
-            (string) config('demo.admin_password'),
-            true
-        );
-
         DB::transaction(function () use ($owner, $agent) {
             $account = $owner->ownedAccounts()->first()
-                ?? app(AccountProvisioner::class)->create($owner, 'Harbour & Co.', 'pro', [
+                ?? app(AccountProvisioner::class)->create($owner, 'Harbour & Co.', null, [
                     'workspace_type' => 'business',
                     'industry' => 'Retail',
                     'timezone' => config('app.timezone', 'UTC'),
                 ]);
-
-            $this->keepProActive($account);
 
             $account->users()->syncWithoutDetaching([
                 $owner->id => ['role' => 'owner'],
@@ -80,8 +66,7 @@ class DemoInboxSeeder extends Seeder
             $connection = $this->connection($account);
             $conversations = $this->inbox($account, $connection, $owner, $agent);
             $this->flow($account, $owner);
-            $agents = $this->assistants($account, $owner, $conversations);
-            $this->developer($account, $connection, $agents);
+            $this->developer($account, $connection);
         });
 
         $this->command?->info('Demo workspace ready for '.config('demo.user_email').'.');
@@ -102,26 +87,6 @@ class DemoInboxSeeder extends Seeder
         ])->save();
 
         return $user;
-    }
-
-    private function keepProActive($account): void
-    {
-        $plan = Plan::where('key', 'pro')->first();
-        $subscription = $account->subscription;
-        if (! $subscription || ! $plan) {
-            return;
-        }
-
-        $subscription->forceFill([
-            'plan_id' => $plan->id,
-            'status' => 'active',
-            'trial_ends_at' => null,
-            'current_period_start' => now()->startOfMonth(),
-            'current_period_end' => now()->addYear(),
-            'cancel_at_period_end' => false,
-            'canceled_at' => null,
-            'provider' => 'manual',
-        ])->save();
     }
 
     private function connection($account): WhatsAppConnection
@@ -216,6 +181,118 @@ class DemoInboxSeeder extends Seeder
                     ['outbound', 'Confirmed Rahul. Your invoice and order confirmation have been sent.', 1415],
                 ],
             ],
+            [
+                'name' => 'Lena Fischer',
+                'wa_id' => '15550100005',
+                'email' => 'lena.fischer@example.com',
+                'phone' => '+1 555 010 0005',
+                'status' => 'active',
+                'conversation_status' => 'open',
+                'priority' => 'high',
+                'assignee' => $agent->id,
+                'messages' => [
+                    ['inbound', "Hi! My parcel says delivered but I can't find it.", 12],
+                    ['outbound', 'Sorry about that, Lena. Let me check with the courier right away.', 9],
+                    ['inbound', "Thank you, it's order HC-20418.", 6],
+                ],
+            ],
+            [
+                'name' => 'Tom Becker',
+                'wa_id' => '15550100006',
+                'email' => 'tom.becker@example.com',
+                'phone' => '+1 555 010 0006',
+                'status' => 'active',
+                'conversation_status' => 'pending',
+                'priority' => 'normal',
+                'assignee' => null,
+                'messages' => [
+                    ['inbound', 'Do you ship to Austria?', 35],
+                ],
+            ],
+            [
+                'name' => 'Amara Okafor',
+                'wa_id' => '15550100007',
+                'email' => 'amara.okafor@example.com',
+                'phone' => '+1 555 010 0007',
+                'status' => 'active',
+                'conversation_status' => 'open',
+                'priority' => 'normal',
+                'assignee' => $owner->id,
+                'messages' => [
+                    ['inbound', 'Can I change the colour on my order to navy?', 48],
+                    ['outbound', "Done! Navy it is. You'll get an updated confirmation shortly.", 41],
+                ],
+            ],
+            [
+                'name' => 'Diego Alvarez',
+                'wa_id' => '15550100008',
+                'email' => 'diego.alvarez@example.com',
+                'phone' => '+1 555 010 0008',
+                'status' => 'active',
+                'conversation_status' => 'open',
+                'priority' => 'urgent',
+                'assignee' => $agent->id,
+                'messages' => [
+                    ['inbound', 'The zip on my jacket broke after one week.', 64],
+                    ['outbound', "That shouldn't happen. Could you send a photo so we can arrange a replacement?", 58],
+                    ['inbound', 'Sure, sending it now.', 55],
+                ],
+            ],
+            [
+                'name' => 'Hana Sato',
+                'wa_id' => '15550100009',
+                'email' => 'hana.sato@example.com',
+                'phone' => '+1 555 010 0009',
+                'status' => 'active',
+                'conversation_status' => 'closed',
+                'priority' => 'low',
+                'assignee' => $owner->id,
+                'messages' => [
+                    ['inbound', 'Thanks for the quick help yesterday!', 2880],
+                    ['outbound', 'Happy to help, Hana. Have a great week!', 2870],
+                ],
+            ],
+            [
+                'name' => 'Noah Williams',
+                'wa_id' => '15550100010',
+                'email' => 'noah.williams@example.com',
+                'phone' => '+1 555 010 0010',
+                'status' => 'active',
+                'conversation_status' => 'pending',
+                'priority' => 'normal',
+                'assignee' => null,
+                'messages' => [
+                    ['inbound', 'Is the winter sale starting this Friday?', 220],
+                ],
+            ],
+            [
+                'name' => 'Chloe Martin',
+                'wa_id' => '15550100011',
+                'email' => 'chloe.martin@example.com',
+                'phone' => '+1 555 010 0011',
+                'status' => 'active',
+                'conversation_status' => 'open',
+                'priority' => 'normal',
+                'assignee' => $agent->id,
+                'messages' => [
+                    ['inbound', 'Do you have a store in Lyon?', 300],
+                    ['outbound', 'Not yet, but we deliver to Lyon in 2 to 3 days.', 290],
+                ],
+            ],
+            [
+                'name' => 'Ibrahim Haddad',
+                'wa_id' => '15550100012',
+                'email' => 'ibrahim.haddad@example.com',
+                'phone' => '+1 555 010 0012',
+                'status' => 'active',
+                'conversation_status' => 'closed',
+                'priority' => 'normal',
+                'assignee' => $owner->id,
+                'messages' => [
+                    ['inbound', 'Please cancel my newsletter subscription.', 4320],
+                    ['outbound', "Done. You won't receive marketing messages from us any more.", 4300],
+                ],
+            ],
         ];
 
         $conversations = [];
@@ -289,10 +366,17 @@ class DemoInboxSeeder extends Seeder
             $conversations[$sample['wa_id']] = $conversation;
         }
 
-        ContactTag::updateOrCreate(
-            ['account_id' => $account->id, 'name' => 'VIP'],
-            ['color' => '#047857', 'description' => 'Customers who order often']
-        );
+        foreach ([
+            ['VIP', '#047857', 'Customers who order often'],
+            ['Wholesale', '#2563eb', 'Shops that buy in bulk'],
+            ['Returns', '#dc2626', 'Open return or exchange'],
+            ['Newsletter', '#7c3aed', 'Opted in to marketing messages'],
+        ] as [$tagName, $color, $description]) {
+            ContactTag::updateOrCreate(
+                ['account_id' => $account->id, 'name' => $tagName],
+                ['color' => $color, 'description' => $description]
+            );
+        }
 
         QuickReply::updateOrCreate(
             ['account_id' => $account->id, 'shortcut' => 'order_status'],
@@ -377,99 +461,7 @@ class DemoInboxSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  array<string, WhatsAppConversation>  $conversations
-     * @return array<string, AiAgent>
-     */
-    private function assistants($account, User $owner, array $conversations): array
-    {
-        $maya = AiAgent::updateOrCreate(
-            ['account_id' => $account->id, 'slug' => 'maya'],
-            [
-                'created_by' => $owner->id,
-                'name' => 'Maya',
-                'avatar' => '🌿',
-                'role' => 'support',
-                'language' => 'en',
-                'tone' => 'friendly',
-                'mode' => 'suggest',
-                'is_active' => true,
-                'instructions' => 'Help with order status, delivery windows, and returns. Keep replies under three sentences.',
-                'goal' => 'Resolve delivery questions before handing off.',
-                'fallback_reply' => 'I will ask a teammate to take a look and reply shortly.',
-                'max_auto_replies_per_conversation' => 3,
-                'max_reply_chars' => 500,
-                'confidence_threshold' => 0.7,
-                'last_used_at' => now()->subMinutes(20),
-            ]
-        );
-
-        $leah = AiAgent::updateOrCreate(
-            ['account_id' => $account->id, 'slug' => 'leah'],
-            [
-                'created_by' => $owner->id,
-                'name' => 'Leah',
-                'avatar' => '✨',
-                'role' => 'sales',
-                'language' => 'en',
-                'tone' => 'concise',
-                'mode' => 'approval',
-                'is_active' => true,
-                'instructions' => 'Suggest a product from the current catalog and ask one follow-up question.',
-                'goal' => 'Help shoppers choose a size or bundle.',
-                'fallback_reply' => 'A specialist can confirm stock for you.',
-                'max_auto_replies_per_conversation' => 2,
-                'max_reply_chars' => 400,
-                'confidence_threshold' => 0.75,
-                'last_used_at' => now()->subHours(5),
-            ]
-        );
-
-        AiUsageLog::where('account_id', $account->id)->where('user_id', $owner->id)->delete();
-        foreach (range(1, 12) as $ignored) {
-            AiUsageLog::create([
-                'user_id' => $owner->id,
-                'account_id' => $account->id,
-                'feature' => 'conversation_suggest',
-                'created_at' => now()->subDays(2),
-            ]);
-        }
-        foreach (range(1, 4) as $ignored) {
-            AiUsageLog::create([
-                'user_id' => $owner->id,
-                'account_id' => $account->id,
-                'feature' => 'support_reply',
-                'created_at' => now()->subDay(),
-            ]);
-        }
-
-        AiAgentRun::where('account_id', $account->id)->whereIn('ai_agent_id', [$maya->id, $leah->id])->delete();
-        $priya = $conversations['15550100001'] ?? null;
-        if ($priya) {
-            AiAgentRun::create([
-                'account_id' => $account->id,
-                'ai_agent_id' => $maya->id,
-                'whatsapp_conversation_id' => $priya->id,
-                'status' => 'sent',
-                'reason' => 'Drafted a delivery update for Priya Nair',
-                'suggestion' => 'Your order is packed and will arrive tomorrow between 11 AM and 2 PM.',
-            ]);
-            AiAgentRun::create([
-                'account_id' => $account->id,
-                'ai_agent_id' => $leah->id,
-                'whatsapp_conversation_id' => $priya->id,
-                'status' => 'skipped',
-                'reason' => 'Waiting for a teammate to approve the product suggestion',
-            ]);
-        }
-
-        return ['maya' => $maya, 'leah' => $leah];
-    }
-
-    /**
-     * @param  array<string, AiAgent>  $agents
-     */
-    private function developer($account, WhatsAppConnection $connection, array $agents): void
+    private function developer($account, WhatsAppConnection $connection): void
     {
         $template = WhatsAppTemplate::updateOrCreate(
             ['account_id' => $account->id, 'name' => 'order_update'],
@@ -477,7 +469,7 @@ class DemoInboxSeeder extends Seeder
                 'whatsapp_connection_id' => $connection->id,
                 'language' => 'en',
                 'category' => 'UTILITY',
-                'status' => 'approved',
+                'status' => 'APPROVED',
                 'body_text' => 'Hi {{1}}, your order {{2}} is on the way and arrives {{3}}.',
                 'footer_text' => 'Harbour & Co.',
                 'components' => [
@@ -487,6 +479,61 @@ class DemoInboxSeeder extends Seeder
                 'last_synced_at' => now()->subHour(),
             ]
         );
+
+        $moreTemplates = [
+            ['winter_sale', 'MARKETING', 'APPROVED', 'Hi {{1}}, our winter sale starts Friday. Get 20% off coats and knitwear with code WARM20.'],
+            ['appointment_reminder', 'UTILITY', 'APPROVED', 'Hi {{1}}, a reminder of your fitting at {{2}} on {{3}}. Reply 1 to confirm or 2 to reschedule.'],
+            ['feedback_request', 'MARKETING', 'PENDING', 'Hi {{1}}, how was your recent order? Reply with a score from 1 to 5.'],
+            ['back_in_stock', 'MARKETING', 'APPROVED', 'Good news {{1}}: {{2}} is back in stock. Tap below to order before it sells out.'],
+            ['payment_received', 'UTILITY', 'REJECTED', 'We received your payment of {{1}} for order {{2}}.'],
+        ];
+        $templateIds = [];
+        foreach ($moreTemplates as [$name, $category, $status, $body]) {
+            $templateIds[$name] = WhatsAppTemplate::updateOrCreate(
+                ['account_id' => $account->id, 'name' => $name],
+                [
+                    'whatsapp_connection_id' => $connection->id,
+                    'language' => 'en',
+                    'category' => $category,
+                    'status' => $status,
+                    'body_text' => $body,
+                    'footer_text' => 'Harbour & Co.',
+                    'components' => [
+                        ['type' => 'BODY', 'text' => $body],
+                        ['type' => 'FOOTER', 'text' => 'Harbour & Co.'],
+                    ],
+                    'last_synced_at' => now()->subHours(3),
+                ]
+            )->id;
+        }
+
+        foreach ([
+            ['Winter sale preview', 'winter_sale', 'scheduled', 0, 0, 0, 0, 0, 2400],
+            ['Back in stock: wool coats', 'back_in_stock', 'completed', 342, 340, 331, 198, 2, -7200],
+        ] as [$campaignName, $templateName, $status, $total, $sent, $delivered, $read, $failed, $offsetMinutes]) {
+            Campaign::updateOrCreate(
+                ['account_id' => $account->id, 'name' => $campaignName],
+                [
+                    'whatsapp_connection_id' => $connection->id,
+                    'whatsapp_template_id' => $templateIds[$templateName],
+                    'created_by' => $account->owner_id,
+                    'slug' => \Illuminate\Support\Str::slug($campaignName),
+                    'description' => 'Demo campaign.',
+                    'status' => $status,
+                    'type' => 'template',
+                    'recipient_type' => 'contacts',
+                    'total_recipients' => $total,
+                    'sent_count' => $sent,
+                    'delivered_count' => $delivered,
+                    'read_count' => $read,
+                    'failed_count' => $failed,
+                    'respect_opt_out' => true,
+                    'scheduled_at' => $status === 'scheduled' ? now()->addMinutes($offsetMinutes) : null,
+                    'started_at' => $status === 'completed' ? now()->addMinutes($offsetMinutes) : null,
+                    'completed_at' => $status === 'completed' ? now()->addMinutes($offsetMinutes + 50) : null,
+                ]
+            );
+        }
 
         Campaign::updateOrCreate(
             ['account_id' => $account->id, 'name' => 'Weekend restock'],
@@ -590,7 +637,7 @@ class DemoInboxSeeder extends Seeder
             'status' => 200,
             'attempts' => 1,
             'duration_ms' => 86,
-            'payload' => ['demo' => true, 'agent' => $agents['maya']->name],
+            'payload' => ['demo' => true],
             'delivered_at' => now()->subMinutes(12),
         ]);
     }

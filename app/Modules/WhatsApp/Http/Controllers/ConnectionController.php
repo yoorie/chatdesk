@@ -32,10 +32,6 @@ class ConnectionController extends Controller
     {
         $account = $request->attributes->get('account') ?? current_account();
 
-        if (! $this->canConnectWabaAfterPayment($account)) {
-            return $this->paymentRequiredRedirect($account);
-        }
-
         $connections = WhatsAppConnection::where('account_id', $account->id)
             ->orderBy('created_at', 'desc')
             ->get()
@@ -96,7 +92,6 @@ class ConnectionController extends Controller
             'connections' => $connections,
             'canCreate' => Gate::allows('create', WhatsAppConnection::class)
                 && $this->entitlementService->canCreateConnection($account),
-            'embeddedSignup' => $this->getEmbeddedSignupConfig(),
             'centralWebhook' => [
                 'url' => route('webhooks.whatsapp.central.receive'),
                 'verify_token' => WebhookController::centralVerifyToken(),
@@ -125,39 +120,6 @@ class ConnectionController extends Controller
             ])
             ->values()
             ->all();
-    }
-
-    protected function canConnectWabaAfterPayment($account): bool
-    {
-        $account->loadMissing('subscription.plan');
-        $subscription = $account->subscription;
-        $plan = $subscription?->plan;
-
-        if (! $subscription || ! $plan) {
-            return false;
-        }
-
-        $isZeroAmountPlan = (int) ($plan->price_monthly ?? 0) <= 0;
-        if ($isZeroAmountPlan && $subscription->isActive()) {
-            return true;
-        }
-
-        if ($subscription->isInTrial()) {
-            return true;
-        }
-
-        return $subscription->isActive() && $subscription->last_payment_at !== null;
-    }
-
-    protected function paymentRequiredRedirect($account): RedirectResponse
-    {
-        $account->loadMissing('subscription.plan');
-        $planKey = $account->subscription?->plan?->key;
-
-        return redirect()->route('app.billing.index', [
-            'tab' => 'plans',
-            'checkout_plan' => $planKey,
-        ])->with('error', 'Payment is required before connecting WhatsApp.');
     }
 
     /**
@@ -218,24 +180,6 @@ class ConnectionController extends Controller
             ->with('success', 'WhatsApp number saved. Now add the webhook URL and verify token shown below in your Meta app.');
     }
 
-    private function getEmbeddedSignupConfig(): array
-    {
-        $appId = PlatformSetting::get('whatsapp.meta_app_id', config('whatsapp.meta.app_id'));
-        $configId = PlatformSetting::get('whatsapp.embedded_signup_config_id', config('whatsapp.meta.embedded_signup_config_id'));
-        $coexistenceConfigId = PlatformSetting::get('whatsapp.coexistence_signup_config_id', config('whatsapp.meta.coexistence_signup_config_id'));
-        $apiVersion = PlatformSetting::get('whatsapp.api_version', config('whatsapp.meta.api_version', 'v25.0'));
-        $enabledSetting = PlatformSetting::get('whatsapp.embedded_enabled', null);
-        $enabled = $enabledSetting !== null ? (bool) $enabledSetting : (bool) ($appId && ($configId || $coexistenceConfigId));
-
-        return [
-            'enabled' => $enabled,
-            'appId' => $enabled ? $appId : null,
-            'configId' => $enabled ? $configId : null,
-            'coexistenceEnabled' => $enabled && filled($coexistenceConfigId),
-            'coexistenceConfigId' => $enabled && filled($coexistenceConfigId) ? $coexistenceConfigId : null,
-            'apiVersion' => $apiVersion ?: 'v25.0'];
-    }
-
     protected function coexistenceStatus(string $connectionMode, array $phoneDetails): ?string
     {
         if ($connectionMode !== 'coexistence') {
@@ -288,43 +232,6 @@ class ConnectionController extends Controller
         }
 
         return $resolved;
-    }
-
-    protected function accountHasWabaAccount($account): bool
-    {
-        return $account && WhatsAppConnection::where('account_id', $account->id)
-            ->where('is_active', true)
-            ->exists();
-    }
-
-    protected function extractWabaIdFromDebugToken(array $debugData): ?string
-    {
-        $granularScopes = $debugData['granular_scopes'] ?? [];
-        foreach ($granularScopes as $scope) {
-            if (($scope['scope'] ?? '') === 'whatsapp_business_management') {
-                $targetIds = $scope['target_ids'] ?? [];
-                if (! empty($targetIds)) {
-                    return (string) $targetIds[0];
-                }
-            }
-        }
-
-        return null;
-    }
-
-    protected function parseEmbeddedSessionInfo(mixed $sessionInfo): array
-    {
-        if (is_array($sessionInfo)) {
-            return $sessionInfo;
-        }
-
-        if (! is_string($sessionInfo) || trim($sessionInfo) === '') {
-            return [];
-        }
-
-        $decoded = json_decode($sessionInfo, true);
-
-        return is_array($decoded) ? $decoded : [];
     }
 
     protected function fetchWabaDetailsSafely(?string $wabaId, ?string $accessToken): array
@@ -516,7 +423,7 @@ class ConnectionController extends Controller
             });
 
             if (! $hasBusinessManagement) {
-                return (brand_name().' requested business_management during Embedded Signup, but Meta did not grant it to the returned token. Enable/grant business_management for the Meta app/config or add a platform system-user token with business_management and whatsapp_business_management access to this WABA.');
+                return brand_name().' requested business_management during Embedded Signup, but Meta did not grant it to the returned token. Enable/grant business_management for the Meta app/config or add a platform system-user token with business_management and whatsapp_business_management access to this WABA.';
             }
 
             if (! $hasWabaManagement) {
@@ -623,7 +530,7 @@ class ConnectionController extends Controller
 
         if ($unsubscribeError) {
             return redirect()->route('app.whatsapp.connections.index')
-                ->with('warning', "{$connectionName} is disconnected from ".brand_name().". WhatsApp may keep sending updates for a short while; you do not need to do anything.");
+                ->with('warning', "{$connectionName} is disconnected from ".brand_name().'. WhatsApp may keep sending updates for a short while; you do not need to do anything.');
         }
 
         return redirect()->route('app.whatsapp.connections.index')->with('success', "{$connectionName} is disconnected.");

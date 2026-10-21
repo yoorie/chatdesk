@@ -51,7 +51,6 @@ Route::middleware(['module.entitled:whatsapp.cloud'])->group(function () {
     Route::post('/conversations/{conversation}/send-buttons', [ConversationComposerController::class, 'sendInteractiveButtons'])->name('whatsapp.conversations.send-buttons');
     Route::post('/conversations/{conversation}/send-flow', [ConversationComposerController::class, 'sendFlow'])->name('whatsapp.conversations.send-flow');
     Route::post('/conversations/{conversation}/send-cta-url', [ConversationComposerController::class, 'sendCtaUrl'])->name('whatsapp.conversations.send-cta-url');
-    Route::post('/conversations/{conversation}/send-payment-link', [ConversationComposerController::class, 'sendPaymentLink'])->name('whatsapp.conversations.send-payment-link');
     Route::post('/conversations/{conversation}/send-contact-card', [ConversationComposerController::class, 'sendContactCard'])->name('whatsapp.conversations.send-contact-card');
     Route::post('/conversations/{conversation}/send-product', [ConversationComposerController::class, 'sendProduct'])->name('whatsapp.conversations.send-product');
     Route::post('/conversations/{conversation}/notes', [ConversationController::class, 'addInternalNote'])->name('whatsapp.conversations.notes.store');

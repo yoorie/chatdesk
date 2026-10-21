@@ -95,7 +95,7 @@ class WebhookController extends Controller
                     'Unmatched WhatsApp webhook',
                     "Meta sent a webhook for phone number ID {$phoneNumberId}, but no active connection matches it.",
                     'warning',
-                    route('platform.system-health'),
+                    null,
                     [
                         'phone_number_id' => $phoneNumberId,
                         'correlation_id' => $request->attributes->get('webhook_correlation_id'),

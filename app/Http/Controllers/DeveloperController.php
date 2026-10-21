@@ -19,9 +19,6 @@ class DeveloperController extends Controller
     public function index(Request $request): Response|RedirectResponse
     {
         $account = $request->attributes->get('account') ?? current_account();
-        if (in_array($request->query('tab'), ['invoices', 'transactions'], true)) {
-            return redirect()->route('app.billing.index', ['tab' => $request->query('tab') === 'invoices' ? 'invoices' : 'payment']);
-        }
 
         $webhookDeliveryQuery = AccountWebhookDelivery::where('account_id', $account->id);
 
@@ -292,7 +289,6 @@ class DeveloperController extends Controller
 
         return $headers;
     }
-
 
     private function webhookEvents(): array
     {

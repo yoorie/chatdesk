@@ -13,7 +13,6 @@ import ManualConnectDialog, { CONNECT_GUIDE_URL } from './ManualConnectDialog';
 import { Head, router, useForm } from '@inertiajs/react';
 import {
   AlertTriangle,
-  BadgeCheck,
   Building2,
   CheckCircle2,
   Globe2,
@@ -26,12 +25,11 @@ import {
   Phone,
   RefreshCw,
   ShieldCheck,
-  Sparkles,
   Trash2,
   UserCheck,
   Zap,
 } from 'lucide-react';
-import { FormEventHandler, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEventHandler, ReactNode, useEffect, useState } from 'react';
 declare global {
   interface Window {
     FB?: any;
@@ -94,28 +92,9 @@ interface Connection {
     received_at?: string | null;
   }>;
 }
-type EmbeddedSignup = {
-  enabled?: boolean;
-  appId?: string;
-  configId?: string;
-  coexistenceEnabled?: boolean;
-  coexistenceConfigId?: string;
-  apiVersion?: string;
-};
 type CentralWebhook = {
   url: string;
   verify_token: string;
-};
-type SetupPath = 'new_cloud_api' | 'migrate_api' | 'coexistence';
-type PendingEmbeddedReview = {
-  payload: Record<string, string>;
-  summary: {
-    mode: 'cloud_api' | 'coexistence';
-    wabaId: string;
-    phoneNumberId: string;
-    businessPhone: string;
-    businessId: string;
-  };
 };
 const profileValue = (value: string | null | undefined, fallback = '') => {
   const normalized = typeof value === 'string' ? value.trim() : '';
@@ -124,14 +103,12 @@ const profileValue = (value: string | null | undefined, fallback = '') => {
 export default function ConnectionsIndex({
   connections,
   canCreate,
-  embeddedSignup,
   centralWebhook,
   defaultApiVersion,
 }: {
   account: any;
   connections: Connection[];
   canCreate: boolean;
-  embeddedSignup: EmbeddedSignup;
   centralWebhook: CentralWebhook;
   defaultApiVersion: string;
 }) {
@@ -140,31 +117,13 @@ export default function ConnectionsIndex({
   const [selectedId, setSelectedId] = useState<number | null>(activeConnections[0]?.id ?? null);
   const connection =
     activeConnections.find((item) => item.id === selectedId) ?? activeConnections[0] ?? null;
-  const [embeddedReady, setEmbeddedReady] = useState(false);
-  const [autoStatus, setAutoStatus] = useState<
-    'idle' | 'loading' | 'authorizing' | 'saving' | 'error'
-  >('idle');
-  const [autoMessage, setAutoMessage] = useState(
-    'Sign in with Facebook to finish. Takes about 2 minutes.'
-  );
+  const autoStatus = 'idle' as 'idle' | 'authorizing' | 'saving';
   const [showAutoDialog, setShowAutoDialog] = useState(false);
   const [showWebhookDialog, setShowWebhookDialog] = useState(false);
-  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [showMetaDetails, setShowMetaDetails] = useState(false);
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
-  const [signupMode, setSignupMode] = useState<'cloud_api' | 'coexistence'>('cloud_api');
-  const [setupPath, setSetupPath] = useState<SetupPath>('new_cloud_api');
   const [refreshingHealth, setRefreshingHealth] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
-  const [pendingEmbeddedReview, setPendingEmbeddedReview] = useState<PendingEmbeddedReview | null>(
-    null
-  );
-  const embeddedSessionRef = useRef<Record<string, any>>({});
-  const embeddedEnabled = Boolean(
-    embeddedSignup?.enabled &&
-    embeddedSignup?.appId &&
-    (embeddedSignup?.configId || embeddedSignup?.coexistenceConfigId)
-  );
   const connectionKey = connection?.id ?? 'new';
   const profileForm = useForm({
     _method: 'put',
@@ -260,244 +219,14 @@ export default function ConnectionsIndex({
     });
   }, [connectionKey, profileSetup]);
   useEffect(() => {
-    if (!embeddedEnabled) {
-      return;
-    }
-    const handleEmbeddedMessage = (event: MessageEvent) => {
-      if (!event.origin.startsWith('https://')) return;
-      const origin = new URL(event.origin);
-      if (
-        origin.protocol !== 'https:' ||
-        (origin.hostname !== 'facebook.com' && !origin.hostname.endsWith('.facebook.com'))
-      )
-        return;
-      try {
-        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (data?.type === 'WA_EMBEDDED_SIGNUP') {
-          embeddedSessionRef.current = data || {};
-          if (data.event === 'FINISH') {
-            setAutoMessage('Signed in. Finishing up...');
-          } else if (data.event === 'CANCEL') {
-            setAutoStatus('error');
-            setAutoMessage('Sign-in was closed. Try again when you are ready.');
-          } else if (data.event === 'ERROR') {
-            setAutoStatus('error');
-            setAutoMessage(
-              friendlyError(data?.data?.error_message, 'Something went wrong. Please try again.')
-            );
-          }
-        }
-      } catch (error) {
-        setAutoStatus('error');
-        setAutoMessage('Something went wrong while connecting. Please try again.');
-      }
-    };
-    window.addEventListener('message', handleEmbeddedMessage);
-    const initSdk = () => {
-      if (!window.FB) {
-        return;
-      }
-      window.FB.init({
-        appId: embeddedSignup.appId,
-        cookie: true,
-        xfbml: true,
-        version: embeddedSignup.apiVersion || defaultApiVersion || 'v25.0',
-      });
-      setEmbeddedReady(true);
-      setAutoStatus('idle');
-      setAutoMessage('Sign in with Facebook to finish. Takes about 2 minutes.');
-    };
-    if (window.FB) {
-      initSdk();
-      return () => window.removeEventListener('message', handleEmbeddedMessage);
-    }
-    setAutoStatus('loading');
-    setAutoMessage('Getting ready...');
-    window.fbAsyncInit = initSdk;
-    if (!document.getElementById('facebook-jssdk')) {
-      const script = document.createElement('script');
-      script.id = 'facebook-jssdk';
-      script.src = 'https://connect.facebook.net/en_US/sdk.js';
-      script.async = true;
-      script.defer = true;
-      script.onerror = () => {
-        setAutoStatus('error');
-        setAutoMessage('Could not load. Refresh the page and try again.');
-      };
-      document.body.appendChild(script);
-    }
-    return () => {
-      window.removeEventListener('message', handleEmbeddedMessage);
-    };
-  }, [
-    connectionKey,
-    embeddedEnabled,
-    embeddedSignup?.appId,
-    embeddedSignup?.apiVersion,
-    defaultApiVersion,
-  ]);
-  useEffect(() => {
     if (connection || typeof window === 'undefined') {
       return;
     }
     const setup = new URLSearchParams(window.location.search).get('setup');
-    if (setup === 'embedded') {
-      setSetupPath('new_cloud_api');
-      setSignupMode('cloud_api');
+    if (setup) {
       setShowAutoDialog(true);
-      return;
-    }
-    if (setup === 'migrate_api') {
-      setSetupPath('migrate_api');
-      setSignupMode('cloud_api');
-      setShowAutoDialog(true);
-      return;
-    }
-    if (setup === 'coexistence') {
-      setSetupPath('coexistence');
-      setSignupMode('coexistence');
-      setShowAutoDialog(true);
-      return;
     }
   }, [connectionKey, connection]);
-  const automaticDisabled =
-    !canCreate ||
-    !embeddedEnabled ||
-    !embeddedReady ||
-    (signupMode === 'cloud_api' && !embeddedSignup?.configId) ||
-    (signupMode === 'coexistence' && !embeddedSignup?.coexistenceEnabled) ||
-    autoStatus === 'authorizing' ||
-    autoStatus === 'saving';
-  const automaticButtonLabel = useMemo(() => {
-    if (pendingEmbeddedReview) return 'Confirm and connect';
-    if (!embeddedEnabled) return 'Not available yet';
-    if (signupMode === 'cloud_api' && !embeddedSignup?.configId) return 'Not available yet';
-    if (signupMode === 'coexistence' && !embeddedSignup?.coexistenceEnabled)
-      return 'Not available yet';
-    if (!embeddedReady || autoStatus === 'loading') return 'Loading...';
-    if (autoStatus === 'authorizing') return 'Opening Facebook...';
-    if (autoStatus === 'saving') return 'Finishing setup...';
-    return 'Continue with Facebook';
-  }, [
-    pendingEmbeddedReview,
-    embeddedEnabled,
-    embeddedReady,
-    autoStatus,
-    signupMode,
-    embeddedSignup?.coexistenceEnabled,
-    embeddedSignup?.configId,
-  ]);
-  const submitEmbedded = (payload: Record<string, string>) => {
-    setAutoStatus('saving');
-    setAutoMessage('Linking your number...');
-    router.post(route('app.whatsapp.connections.store-embedded', {}), payload, {
-      preserveScroll: true,
-      onSuccess: (page) => {
-        const error = (page.props.flash as { error?: string } | undefined)?.error;
-        if (error) {
-          setAutoStatus('error');
-          setAutoMessage(error);
-          addToast({
-            title: 'WhatsApp is not connected yet',
-            description: friendlyError(error),
-            variant: 'error',
-          });
-          return;
-        }
-        setPendingEmbeddedReview(null);
-        setAutoStatus('idle');
-        setAutoMessage('WhatsApp connected.');
-        setShowAutoDialog(false);
-        addToast({ title: 'WhatsApp connected', variant: 'success' });
-      },
-      onError: (errors) => {
-        setAutoStatus('error');
-        setAutoMessage(
-          friendlyError((errors as any)?.embedded, 'Could not finish connecting. Please try again.')
-        );
-        addToast({ title: 'WhatsApp is not connected yet', variant: 'error' });
-      },
-    });
-  };
-  const confirmEmbeddedReview = () => {
-    if (!pendingEmbeddedReview) {
-      startEmbeddedSignup();
-      return;
-    }
-    submitEmbedded(pendingEmbeddedReview.payload);
-  };
-  const startEmbeddedSignup = () => {
-    if (automaticDisabled || !window.FB) {
-      return;
-    }
-    setPendingEmbeddedReview(null);
-    setAutoStatus('authorizing');
-    setAutoMessage('Opening Facebook...');
-    window.FB.login(
-      (response: any) => {
-        if (!response?.authResponse) {
-          setAutoStatus('error');
-          setAutoMessage('Sign-in was closed. Try again when you are ready.');
-          return;
-        }
-        const code = response.authResponse.code || '';
-        const accessToken = response.authResponse.accessToken || '';
-        if (!code && !accessToken) {
-          setAutoStatus('error');
-          setAutoMessage('Facebook did not finish signing you in. Please try again.');
-          return;
-        }
-        window.setTimeout(() => {
-          const session = embeddedSessionRef.current || {};
-          const sessionData = session.data || {};
-          const payload = {
-            name: '',
-            waba_id: sessionData.waba_id || session.waba_id || '',
-            phone_number_id: sessionData.phone_number_id || session.phone_number_id || '',
-            business_id: sessionData.business_id || session.business_id || '',
-            business_phone: sessionData.phone_number || sessionData.display_phone_number || '',
-            session_info: JSON.stringify(session),
-            connection_mode: signupMode,
-            access_token: accessToken,
-            code,
-            pin: '',
-          };
-          setPendingEmbeddedReview({
-            payload,
-            summary: {
-              mode: signupMode,
-              wabaId: payload.waba_id,
-              phoneNumberId: payload.phone_number_id,
-              businessPhone: payload.business_phone,
-              businessId: payload.business_id,
-            },
-          });
-          setAutoStatus('idle');
-          setAutoMessage('Check the number, then confirm.');
-        }, 350);
-      },
-      {
-        config_id:
-          signupMode === 'coexistence' && embeddedSignup.coexistenceConfigId
-            ? embeddedSignup.coexistenceConfigId
-            : embeddedSignup.configId,
-        response_type: 'code',
-        override_default_response_type: true,
-        scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management',
-        extras: {
-          ...(signupMode === 'coexistence'
-            ? { featureType: 'whatsapp_business_app_onboarding' }
-            : {}),
-          version:
-            signupMode === 'coexistence'
-              ? 'v4'
-              : embeddedSignup.apiVersion || defaultApiVersion || 'v25.0',
-          sessionInfoVersion: '3',
-          setup: {},
-        },
-      }
-    );
-  };
   const submitProfile: FormEventHandler = (event) => {
     event.preventDefault();
     if (!connection) return;
@@ -575,8 +304,6 @@ export default function ConnectionsIndex({
               <Button
                 type="button"
                 onClick={() => {
-                  setSetupPath('new_cloud_api');
-                  setSignupMode('cloud_api');
                   setShowAutoDialog(true);
                 }}
               >
@@ -586,7 +313,11 @@ export default function ConnectionsIndex({
           }
         />
         {activeConnections.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="WhatsApp numbers">
+          <div
+            className="flex gap-2 overflow-x-auto pb-1"
+            role="tablist"
+            aria-label="WhatsApp numbers"
+          >
             {activeConnections.map((item) => (
               <button
                 key={item.id}
@@ -616,7 +347,12 @@ export default function ConnectionsIndex({
               </h2>
               <p className="mt-1 text-sm text-ui-text-muted dark:text-ui-dark-text-muted">
                 Uses your own Meta app and the official WhatsApp Cloud API.{' '}
-                <a href={CONNECT_GUIDE_URL} target="_blank" rel="noreferrer" className="font-medium text-ui-green-dark underline dark:text-emerald-300">
+                <a
+                  href={CONNECT_GUIDE_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-ui-green-dark underline dark:text-emerald-300"
+                >
                   Read the setup guide
                 </a>
               </p>
@@ -637,8 +373,6 @@ export default function ConnectionsIndex({
               <Button
                 size="lg"
                 onClick={() => {
-                  setSetupPath('new_cloud_api');
-                  setSignupMode('cloud_api');
                   setShowAutoDialog(true);
                 }}
                 disabled={!canCreate}
@@ -652,7 +386,10 @@ export default function ConnectionsIndex({
                 </summary>
                 <ul className="mx-auto mt-2 max-w-sm space-y-1 text-left leading-5">
                   <li>• Use a new number, or one already on the WhatsApp Cloud API.</li>
-                  <li>• Need several numbers or a multi-tenant SaaS? See ChatDesk paid plans or Zyptos.</li>
+                  <li>
+                    • Need several numbers or a multi-tenant SaaS? See ChatDesk paid plans or
+                    Zyptos.
+                  </li>
                   <li>• Old chats are not copied over. New chats show up once connected.</li>
                 </ul>
               </details>
@@ -713,16 +450,6 @@ export default function ConnectionsIndex({
                       <Button
                         variant="secondary"
                         onClick={() => {
-                          setSetupPath(
-                            connection.connection_mode === 'coexistence'
-                              ? 'coexistence'
-                              : 'new_cloud_api'
-                          );
-                          setSignupMode(
-                            connection.connection_mode === 'coexistence'
-                              ? 'coexistence'
-                              : 'cloud_api'
-                          );
                           setShowAutoDialog(true);
                         }}
                         disabled={autoStatus === 'authorizing' || autoStatus === 'saving'}
@@ -892,14 +619,9 @@ export default function ConnectionsIndex({
               />
             )}
 
-            {showVerificationDialog && (
-              <VerificationDialog onClose={() => setShowVerificationDialog(false)} />
-            )}
-
             {
               <WabaHealthPanel
                 connection={connection}
-                embeddedEnabled={embeddedEnabled}
                 refreshing={refreshingHealth}
                 onRefresh={refreshMetaHealth}
                 onWebhookSetup={() => setShowWebhookDialog(true)}
@@ -917,53 +639,6 @@ export default function ConnectionsIndex({
                   </CardHeader>
                   <CardContent>
                     <WhatsAppProfilePreview connection={connection} />
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Verified badge services</CardTitle>
-                    <CardDescription>
-                      Get help applying for the green verified badge on WhatsApp.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="rounded-card border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/70 dark:bg-blue-950/20">
-                      <div className="flex items-start gap-3">
-                        <BadgeCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-700 dark:text-blue-300" />
-                        <div>
-                          <h3 className="text-sm font-semibold text-blue-950 dark:text-blue-100">
-                            Blue-tick assistance
-                          </h3>
-                          <p className="mt-1 text-sm text-blue-800 dark:text-blue-200">
-                            We can help prepare business verification, profile completeness, policy
-                            readiness, and submission support. Meta makes the final approval or
-                            subscription decision.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <ul className="space-y-2 text-sm text-ui-text-muted dark:text-ui-dark-text-muted">
-                      {[
-                        'Business Manager verification readiness',
-                        'Display name and profile review',
-                        'Policy and website/domain checks',
-                        'Meta Verified and Official Business Account guidance',
-                      ].map((item) => (
-                        <li key={item} className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-ui-green" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      type="button"
-                      onClick={() => setShowVerificationDialog(true)}
-                      className="w-full"
-                    >
-                      <BadgeCheck className="h-4 w-4" />
-                      View service details
-                    </Button>
                   </CardContent>
                 </Card>
               </div>
@@ -1170,25 +845,16 @@ export default function ConnectionsIndex({
 }
 function WabaHealthPanel({
   connection,
-  embeddedEnabled,
   refreshing,
   onRefresh,
   onWebhookSetup,
 }: {
   connection: Connection;
-  embeddedEnabled: boolean;
   refreshing: boolean;
   onRefresh: () => void;
   onWebhookSetup: () => void;
 }) {
   const checks = [
-    {
-      label: 'WhatsApp sign-up',
-      desc: embeddedEnabled
-        ? 'WhatsApp sign-up is available for this workspace.'
-        : 'WhatsApp sign-up is not available yet. Please contact support.',
-      ok: embeddedEnabled,
-    },
     {
       label: 'Business number linked',
       desc:
@@ -1335,214 +1001,6 @@ function StatusPill({ icon, label, value }: { icon: ReactNode; label: string; va
     </span>
   );
 }
-function SetupWizardDialog({
-  open,
-  onClose,
-  embeddedEnabled,
-  embeddedReady,
-  autoStatus,
-  autoMessage,
-  automaticDisabled,
-  automaticButtonLabel,
-  startEmbeddedSignup,
-  confirmEmbeddedReview,
-  pendingEmbeddedReview,
-  connection,
-  setupPath,
-  setSignupMode,
-  setSetupPath,
-  coexistenceEnabled,
-}: {
-  open: boolean;
-  onClose: () => void;
-  embeddedEnabled: boolean;
-  embeddedReady: boolean;
-  autoStatus: 'idle' | 'loading' | 'authorizing' | 'saving' | 'error';
-  autoMessage: string;
-  automaticDisabled: boolean;
-  automaticButtonLabel: string;
-  startEmbeddedSignup: () => void;
-  confirmEmbeddedReview: () => void;
-  pendingEmbeddedReview: PendingEmbeddedReview | null;
-  connection: Connection | null;
-  setupPath: SetupPath;
-  signupMode: 'cloud_api' | 'coexistence';
-  setSignupMode: (mode: 'cloud_api' | 'coexistence') => void;
-  setSetupPath: (path: SetupPath) => void;
-  coexistenceEnabled: boolean;
-}) {
-  const options: Array<{
-    path: SetupPath;
-    mode: 'cloud_api' | 'coexistence';
-    label: string;
-    hint: string;
-    icon: ReactNode;
-    disabled?: boolean;
-  }> = [
-    {
-      path: 'new_cloud_api',
-      mode: 'cloud_api',
-      label: 'New number',
-      hint: 'Not on WhatsApp yet',
-      icon: <Sparkles className="h-4 w-4" />,
-    },
-    {
-      path: 'migrate_api',
-      mode: 'cloud_api',
-      label: 'Move from another provider',
-      hint: 'Keep your number and chats',
-      icon: <RefreshCw className="h-4 w-4" />,
-    },
-    {
-      path: 'coexistence',
-      mode: 'coexistence',
-      label: 'WhatsApp Business app',
-      hint: 'Keep using the app on your phone',
-      icon: <MessageCircle className="h-4 w-4" />,
-      disabled: !coexistenceEnabled,
-    },
-  ];
-  const busy = autoStatus === 'loading' || autoStatus === 'authorizing' || autoStatus === 'saving';
-  const statusText = !embeddedEnabled
-    ? 'Not available yet. Contact support and we will connect you.'
-    : !embeddedReady && autoStatus !== 'error'
-      ? 'Getting ready...'
-      : autoMessage;
-  const showStatus =
-    !embeddedEnabled || autoStatus === 'error' || busy || (!embeddedReady && embeddedEnabled);
-  const selectedLabel = options.find((option) => option.path === setupPath)?.label ?? 'New number';
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={connection ? 'Reconnect WhatsApp' : 'Connect WhatsApp'}
-      description={
-        pendingEmbeddedReview
-          ? 'Check the number, then confirm.'
-          : 'Pick your number type, then sign in with Facebook.'
-      }
-      className="max-w-md"
-      footer={
-        <>
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={pendingEmbeddedReview ? confirmEmbeddedReview : startEmbeddedSignup}
-            disabled={pendingEmbeddedReview ? autoStatus === 'saving' : automaticDisabled}
-          >
-            {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : pendingEmbeddedReview ? (
-              <CheckCircle2 className="h-4 w-4" />
-            ) : (
-              <UserCheck className="h-4 w-4" />
-            )}
-            {automaticButtonLabel}
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-3">
-        {pendingEmbeddedReview ? (
-          <div className="rounded-card border border-ui-green/30 bg-ui-green/5 p-4 dark:border-ui-green/40 dark:bg-ui-green/10">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-ui-green text-white">
-                <Phone className="h-5 w-5" />
-              </span>
-              <div className="min-w-0">
-                <div className="truncate text-base font-semibold text-ui-text dark:text-ui-dark-text">
-                  {pendingEmbeddedReview.summary.businessPhone || 'Your WhatsApp number'}
-                </div>
-                <div className="text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
-                  {pendingEmbeddedReview.summary.mode === 'coexistence'
-                    ? 'WhatsApp Business app'
-                    : selectedLabel}
-                </div>
-              </div>
-            </div>
-            <details className="mt-3 text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
-              <summary className="cursor-pointer list-none font-medium text-ui-green-dark hover:underline dark:text-emerald-300">
-                Details for support
-              </summary>
-              <div className="mt-2 space-y-1 font-mono">
-                <div>
-                  Number ID: {pendingEmbeddedReview.summary.phoneNumberId || 'Not available'}
-                </div>
-                <div>Account ID: {pendingEmbeddedReview.summary.wabaId || 'Not available'}</div>
-              </div>
-            </details>
-            <p className="mt-2 text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
-              Wrong number? Cancel and start again.
-            </p>
-          </div>
-        ) : (
-          <div role="radiogroup" aria-label="Number type" className="space-y-2">
-            {options.map((option) => {
-              const selected = setupPath === option.path;
-              return (
-                <button
-                  key={option.path}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  disabled={option.disabled}
-                  onClick={() => {
-                    setSetupPath(option.path);
-                    setSignupMode(option.mode);
-                  }}
-                  className={`flex w-full items-center gap-3 rounded-card border px-3 py-2.5 text-left transition ${
-                    option.disabled
-                      ? 'cursor-not-allowed border-dashed border-ui-border opacity-60 dark:border-ui-dark-border'
-                      : selected
-                        ? 'border-ui-green bg-ui-green/5 ring-1 ring-ui-green/30 dark:bg-ui-green/10'
-                        : 'border-ui-border bg-white hover:border-ui-green/50 dark:border-ui-dark-border dark:bg-slate-900'
-                  }`}
-                >
-                  <span
-                    className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${selected && !option.disabled ? 'bg-ui-green text-white' : 'bg-gray-100 text-ui-text-muted dark:bg-slate-800 dark:text-ui-dark-text-muted'}`}
-                  >
-                    {option.icon}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-ui-text dark:text-ui-dark-text">
-                      {option.label}
-                    </span>
-                    <span className="block truncate text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
-                      {option.hint}
-                    </span>
-                  </span>
-                  {option.disabled ? (
-                    <span className="text-[11px] font-medium text-ui-text-muted dark:text-ui-dark-text-muted">
-                      Unavailable
-                    </span>
-                  ) : (
-                    <span
-                      className={`h-4 w-4 flex-shrink-0 rounded-full border-2 ${selected ? 'border-ui-green bg-ui-green shadow-[inset_0_0_0_2px_white] dark:shadow-[inset_0_0_0_2px_#0f172a]' : 'border-gray-300 dark:border-slate-600'}`}
-                      aria-hidden
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {showStatus && (
-          <div
-            className={`flex items-center gap-2 rounded-card px-3 py-2 text-xs ${autoStatus === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-200' : 'bg-gray-50 text-ui-text-muted dark:bg-slate-900/70 dark:text-ui-dark-text-muted'}`}
-            role={autoStatus === 'error' ? 'alert' : 'status'}
-          >
-            {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            {autoStatus === 'error' && <AlertTriangle className="h-3.5 w-3.5" />}
-            <span>{statusText}</span>
-          </div>
-        )}
-      </div>
-    </Modal>
-  );
-}
 function DisconnectWabaDialog({
   open,
   onClose,
@@ -1589,8 +1047,8 @@ function DisconnectWabaDialog({
                 Messages will stop until you connect again.
               </h4>
               <p className="mt-1 text-sm leading-6 text-red-800 dark:text-red-200">
-                Your chats, contacts and templates stay in {brandName()}. You can connect this number, or a
-                different one, at any time.
+                Your chats, contacts and templates stay in {brandName()}. You can connect this
+                number, or a different one, at any time.
               </p>
             </div>
           </div>
@@ -1727,55 +1185,6 @@ function WhatsAppProfilePreview({ connection }: { connection: Connection }) {
     </div>
   );
 }
-function VerificationDialog({ onClose }: { onClose: () => void }) {
-  return (
-    <Modal
-      open
-      onClose={onClose}
-      title="Blue-tick verification services"
-      description={`Meta controls verified badge eligibility and approval. ${brandName()} can provide readiness checks and guided submission support.`}
-      className="max-w-xl"
-      footer={
-        <Button type="button" variant="secondary" onClick={onClose}>
-          Close
-        </Button>
-      }
-    >
-      <div className="space-y-4">
-        <div className="flex items-start gap-3 rounded-card border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/70 dark:bg-blue-950/20">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-500/10">
-            <BadgeCheck className="h-5 w-5 text-blue-700 dark:text-blue-300" />
-          </div>
-          <div>
-            <h4 className="text-sm font-semibold text-blue-950 dark:text-blue-100">
-              Readiness and guided submission
-            </h4>
-            <p className="mt-1 text-sm text-blue-800 dark:text-blue-200">
-              We can review the workspace profile, business verification assets, website policy
-              pages, and Meta submission readiness.
-            </p>
-          </div>
-        </div>
-        <div className="rounded-card border border-ui-border bg-gray-50 p-4 dark:border-ui-dark-border dark:bg-slate-900/70">
-          <h4 className="text-sm font-semibold text-ui-text dark:text-ui-dark-text">
-            What we can add
-          </h4>
-          <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-ui-text-muted dark:text-ui-dark-text-muted">
-            <div>Business verification document checklist</div>
-            <div>Display name, website, domain, and policy readiness checks</div>
-            <div>Meta Verified subscription guidance where available</div>
-            <div>Official Business Account readiness and support handoff</div>
-          </div>
-        </div>
-        <div className="rounded-card border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/20 dark:text-amber-100">
-          Badge approval is not guaranteed. Meta Verified is a Meta product, and Official Business
-          Account approval depends on Meta eligibility, business verification, policy compliance,
-          and brand notability.
-        </div>
-      </div>
-    </Modal>
-  );
-}
 function WebhookSetupDialog({
   connection,
   centralWebhook,
@@ -1846,8 +1255,8 @@ function WebhookSetupDialog({
               {connection.webhook_subscribed ? 'Receiving messages' : 'Not receiving messages'}
             </Badge>
             <p className="mt-2 text-sm text-ui-text-muted dark:text-ui-dark-text-muted">
-              WhatsApp sends new messages and delivery updates to {brandName()} automatically once this is
-              on.
+              WhatsApp sends new messages and delivery updates to {brandName()} automatically once
+              this is on.
             </p>
           </div>
         </div>

@@ -29,7 +29,7 @@ class DeveloperTelemetryTest extends TestCase
 
     public function test_public_api_requests_are_persisted_for_developer_ledger(): void
     {
-        $account = $this->createAccountWithPlan('starter');
+        $account = $this->createAccountWithPlan('self-hosted');
         [, $token] = AccountApiKey::issue($account, 'Telemetry key', ['connections:read']);
 
         $this->getJson(route('api.whatsapp.connections'), [
@@ -62,7 +62,7 @@ class DeveloperTelemetryTest extends TestCase
             'https://example.com/webhook' => Http::response(['ok' => true], 202),
         ]);
 
-        $account = $this->createAccountWithPlan('starter');
+        $account = $this->createAccountWithPlan('self-hosted');
         $endpoint = AccountWebhookEndpoint::create([
             'account_id' => $account->id,
             'url' => 'https://example.com/webhook',

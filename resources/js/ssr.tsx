@@ -23,12 +23,10 @@ createServer((page) =>
       /* eslint-disable */
       // @ts-expect-error
       global.route<RouteName> = (name, params, absolute) =>
-        typeof name === 'string' && page.props.ziggy?.routes && !(name in page.props.ziggy.routes)
-          ? '#'
-          : route(name, params as any, absolute, {
-              ...page.props.ziggy,
-              location: new URL(page.props.ziggy.location),
-            });
+        route(name, params as any, absolute, {
+          ...page.props.ziggy,
+          location: new URL(page.props.ziggy.location),
+        });
       /* eslint-enable */
 
       return (

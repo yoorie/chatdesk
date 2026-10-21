@@ -4,16 +4,7 @@ import { Card } from '@/Components/UI/Card';
 import { Input } from '@/Components/UI/Input';
 import AppShell from '@/Layouts/AppShell';
 import { Head, useForm } from '@inertiajs/react';
-import {
-  Bell,
-  Building2,
-  CreditCard,
-  ImagePlus,
-  Inbox,
-  Save,
-  ShieldCheck,
-  User,
-} from 'lucide-react';
+import { Bell, Building2, ImagePlus, Inbox, Save, ShieldCheck, User } from 'lucide-react';
 import { FormEvent, ReactNode, useEffect, useState } from 'react';
 import InboxTab from './Tabs/InboxTab';
 import NotificationsTab from './Tabs/NotificationsTab';
@@ -56,9 +47,7 @@ function PageHeader({ title, subtitle }: { title: string; subtitle: string }) {
         <h1 className="text-xl font-semibold tracking-tight text-ui-text dark:text-ui-dark-text">
           {title}
         </h1>
-        <p className="mt-0.5 text-sm text-ui-text-muted dark:text-ui-dark-text-muted">
-          {subtitle}
-        </p>
+        <p className="mt-0.5 text-sm text-ui-text-muted dark:text-ui-dark-text-muted">{subtitle}</p>
       </div>
     </div>
   );
@@ -78,9 +67,7 @@ function SettingsSection({
       {(title || description) && (
         <div className="mb-4">
           {title && (
-            <h3 className="text-base font-semibold text-ui-text dark:text-ui-dark-text">
-              {title}
-            </h3>
+            <h3 className="text-base font-semibold text-ui-text dark:text-ui-dark-text">{title}</h3>
           )}
           {description && (
             <p className="mt-0.5 text-sm text-ui-text-muted dark:text-ui-dark-text-muted">
