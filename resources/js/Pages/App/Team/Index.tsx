@@ -86,7 +86,7 @@ function permissionGroup(permission: PermissionDefinition) {
 }
 
 function permissionTone(permission: string): 'muted' | 'warning' | 'danger' | 'info' {
-  if (permission.endsWith('.owner') || permission === 'payments.approve') return 'warning';
+  if (permission.endsWith('.owner')) return 'warning';
   if (permission === 'chats.delete' || permission.includes('delete')) return 'danger';
   if (permission.includes('export')) return 'info';
   return 'muted';

@@ -2960,9 +2960,7 @@ export default function ConversationsIndex({
                   <div className="flex flex-shrink-0 flex-wrap items-center gap-2 border-b border-purple-100 bg-purple-50 px-3 py-2 text-xs text-purple-800 dark:border-purple-500/20 dark:bg-purple-500/10 dark:text-purple-200">
                     <span className="inline-flex items-center gap-1.5 font-semibold">
                       <Zap className="h-3.5 w-3.5" />
-                      {activeConversation.automation_processing_mode === 'ai'
-                        ? 'AI is replying'
-                        : 'Bot is replying'}
+                      Bot is replying
                     </span>
                     <span className="min-w-0 flex-1 truncate">
                       Human sending is blocked for a few seconds to avoid duplicate replies.
@@ -2986,7 +2984,7 @@ export default function ConversationsIndex({
                     <span className="min-w-0 flex-1 truncate">
                       {activeConversation.handoff_reason ||
                         activeConversation.bot_paused_reason ||
-                        'Automation and AI autopilot will not reply in this chat.'}
+                        'Automation will not reply in this chat.'}
                     </span>
                     <button
                       type="button"
@@ -3384,8 +3382,7 @@ export default function ConversationsIndex({
                               className="rounded-btn border-gray-200 px-3 py-1.5 text-xs dark:border-ui-dark-border dark:bg-slate-800 dark:text-ui-dark-text"
                             />
                             <p className="text-[11px] leading-relaxed text-ui-text-muted dark:text-ui-dark-text-muted">
-                              Sends an official WhatsApp Flow form inside WhatsApp. Custom surveys
-                              and Meta lead forms are not shown here.
+                              Sends an official WhatsApp Flow form inside WhatsApp.
                             </p>
                           </>
                         )}

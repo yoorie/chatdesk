@@ -20,17 +20,17 @@ test('a single inbound message with no AI assistant shows no system lines', () =
   const thread = [
     inbound,
     audit(1, 'automation_running'),
-    audit(2, 'ai_replying'),
+    audit(2, 'bot_replying'),
     audit(3, 'automation_skipped', { ai_result: { reason: 'no_active_autopilot_agent' } }),
   ];
   assert.deepEqual(visibleTimelineMessages(thread), [inbound]);
 });
 
 test('a sent auto-reply shows one friendly line', () => {
-  const thread = [inbound, audit(1, 'automation_running'), audit(2, 'ai_replying'), audit(3, 'automation_completed')];
+  const thread = [inbound, audit(1, 'automation_running'), audit(2, 'bot_replying'), audit(3, 'automation_completed')];
   const visible = visibleTimelineMessages(thread);
   assert.equal(visible.length, 2);
-  assert.equal(visible[1].text_body, 'AI replied');
+  assert.equal(visible[1].text_body, 'Replied automatically');
 });
 
 test('duplicate failures for the same message collapse into one line', () => {

@@ -5,6 +5,7 @@
         "UI",
         "bootstrap/ssr",
         "public/build",
+        "public/install",
         "node_modules",
         "vendor"
     ]

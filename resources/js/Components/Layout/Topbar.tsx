@@ -26,7 +26,6 @@ import {
   Tags,
   User,
   Users,
-  Wand2,
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -724,8 +723,6 @@ function resultIcon(type: string) {
       return Reply;
     case 'connection':
       return Building2;
-    case 'widget':
-      return Wand2;
     case 'chatbot':
       return Bot;
     default:

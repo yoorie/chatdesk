@@ -230,7 +230,7 @@ class TeamController extends Controller
                     'label' => $label,
                     'group' => str_contains($key, '.') ? str($key)->before('.')->headline()->toString() : 'Core',
                     'owner_only' => str_ends_with($key, '.owner'),
-                    'sensitive' => in_array($key, ['chats.delete', 'payments.approve', 'contacts.export', 'api_keys.owner'], true),
+                    'sensitive' => in_array($key, ['chats.delete', 'contacts.export', 'api_keys.owner'], true),
                 ])
                 ->values(),
         ]);

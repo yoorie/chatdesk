@@ -258,8 +258,7 @@ export const mergeLastInboundAt = (
 
 export const conversationModeLabel = (conversation?: Conversation | null): string => {
   if (!conversation) return 'No chat selected';
-  if (conversation.automation_processing)
-    return conversation.automation_processing_mode === 'ai' ? 'AI replying' : 'Bot replying';
+  if (conversation.automation_processing) return 'Bot replying';
   if (conversation.bot_paused || conversation.handoff_status === 'manual') return 'Manual mode';
   if (conversation.automation_state) return 'Automation waiting';
   return 'Bot ready';

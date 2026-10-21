@@ -31,20 +31,10 @@ class SettingsController extends Controller
                 'timezone' => $account->timezone ?: config('app.timezone', 'UTC'),
                 'logo_url' => $account->logo_path ? Storage::disk('public')->url($account->logo_path) : null,
                 'status' => $account->status,
-                'billing_name' => $account->billing_name,
-                'billing_email' => $account->billing_email,
-                'billing_gstin' => $account->billing_gstin,
-                'billing_address_line1' => $account->billing_address_line1,
-                'billing_address_line2' => $account->billing_address_line2,
-                'billing_city' => $account->billing_city,
-                'billing_state' => $account->billing_state,
-                'billing_state_code' => $account->billing_state_code,
-                'billing_postal_code' => $account->billing_postal_code,
-                'billing_country' => $account->billing_country ?: 'IN',
             ] : null,
             'workspaceTypes' => Account::workspaceTypes(),
             'timezones' => timezone_identifiers_list(),
-            'initialTab' => in_array($request->query('tab'), ['workspace', 'profile', 'security', 'billing', 'notifications', 'inbox'], true)
+            'initialTab' => in_array($request->query('tab'), ['workspace', 'profile', 'security', 'notifications', 'inbox'], true)
                 ? $request->query('tab')
                 : 'workspace',
             'auth' => [
@@ -86,16 +76,6 @@ class SettingsController extends Controller
             'industry' => ['nullable', 'string', 'max:120'],
             'timezone' => ['required', 'timezone'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:2048'],
-            'billing_name' => ['nullable', 'string', 'max:255'],
-            'billing_email' => ['nullable', 'email', 'max:255'],
-            'billing_gstin' => ['nullable', 'string', 'max:20'],
-            'billing_address_line1' => ['nullable', 'string', 'max:255'],
-            'billing_address_line2' => ['nullable', 'string', 'max:255'],
-            'billing_city' => ['nullable', 'string', 'max:120'],
-            'billing_state' => ['nullable', 'string', 'max:120'],
-            'billing_state_code' => ['nullable', 'string', 'max:8'],
-            'billing_postal_code' => ['nullable', 'string', 'max:20'],
-            'billing_country' => ['nullable', 'string', 'max:2'],
         ]);
 
         $logoPath = $account->logo_path;
@@ -114,16 +94,6 @@ class SettingsController extends Controller
             'industry' => $validated['industry'] ?? null,
             'timezone' => $validated['timezone'],
             'logo_path' => $logoPath,
-            'billing_name' => $validated['billing_name'] ?? null,
-            'billing_email' => $validated['billing_email'] ?? null,
-            'billing_gstin' => strtoupper((string) ($validated['billing_gstin'] ?? '')) ?: null,
-            'billing_address_line1' => $validated['billing_address_line1'] ?? null,
-            'billing_address_line2' => $validated['billing_address_line2'] ?? null,
-            'billing_city' => $validated['billing_city'] ?? null,
-            'billing_state' => $validated['billing_state'] ?? null,
-            'billing_state_code' => strtoupper((string) ($validated['billing_state_code'] ?? '')) ?: null,
-            'billing_postal_code' => $validated['billing_postal_code'] ?? null,
-            'billing_country' => strtoupper((string) ($validated['billing_country'] ?? 'IN')),
         ]);
 
         return back()->with('success', 'Workspace settings updated.');
@@ -174,10 +144,8 @@ class SettingsController extends Controller
             'notify_assignment_enabled' => 'required|boolean',
             'notify_mention_enabled' => 'required|boolean',
             'notify_sound_enabled' => 'required|boolean',
-            'notify_billing_enabled' => 'required|boolean',
             'notify_waba_enabled' => 'required|boolean',
             'notify_automation_enabled' => 'required|boolean',
-            'notify_leads_enabled' => 'required|boolean',
             'notify_templates_enabled' => 'required|boolean',
             'notify_email_enabled' => 'required|boolean',
             'notify_in_app_enabled' => 'required|boolean',

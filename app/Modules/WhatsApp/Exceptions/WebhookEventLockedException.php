@@ -2,6 +2,4 @@
 
 namespace App\Modules\WhatsApp\Exceptions;
 
-class WebhookEventLockedException extends \RuntimeException
-{
-}
+class WebhookEventLockedException extends \RuntimeException {}

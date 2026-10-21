@@ -81,7 +81,7 @@ export default function NotificationsIndex({
             <EmptyState
               icon={Bell}
               title="No notifications"
-              description="Alerts about billing, leads, chatbots and templates show up here."
+              description="Alerts about chats, chatbots, campaigns and templates show up here."
             />
           ) : (
             <ul className="divide-y divide-gray-100 dark:divide-slate-700">

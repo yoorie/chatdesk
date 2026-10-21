@@ -27,11 +27,9 @@ class EnsureAccountActive
             return $next($request);
         }
 
-        // Always allow access to billing routes (needed for payment processing)
+        // Settings stay reachable so an admin can still sign out or fix the workspace.
         $route = $request->route()?->getName();
-        $path = $request->path();
-        if (($route && (str_contains($route, 'billing') || str_contains($route, 'settings')))
-            || str_contains($path, 'billing') || str_contains($path, 'settings')) {
+        if (($route && str_contains($route, 'settings')) || str_contains($request->path(), 'settings')) {
             return $next($request);
         }
 

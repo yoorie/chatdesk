@@ -21,16 +21,6 @@ interface Workspace {
   timezone: string;
   logo_url: string | null;
   status: string;
-  billing_name?: string | null;
-  billing_email?: string | null;
-  billing_gstin?: string | null;
-  billing_address_line1?: string | null;
-  billing_address_line2?: string | null;
-  billing_city?: string | null;
-  billing_state?: string | null;
-  billing_state_code?: string | null;
-  billing_postal_code?: string | null;
-  billing_country?: string | null;
 }
 
 interface SettingsIndexProps {
@@ -130,16 +120,6 @@ function WorkspaceTab({ workspace, workspaceTypes = {}, timezones = [] }: Settin
     workspace_type: workspace?.workspace_type || 'business',
     industry: workspace?.industry || '',
     timezone: workspace?.timezone || 'UTC',
-    billing_name: workspace?.billing_name || '',
-    billing_email: workspace?.billing_email || '',
-    billing_gstin: workspace?.billing_gstin || '',
-    billing_address_line1: workspace?.billing_address_line1 || '',
-    billing_address_line2: workspace?.billing_address_line2 || '',
-    billing_city: workspace?.billing_city || '',
-    billing_state: workspace?.billing_state || '',
-    billing_state_code: workspace?.billing_state_code || '',
-    billing_postal_code: workspace?.billing_postal_code || '',
-    billing_country: workspace?.billing_country || 'IN',
     logo: null as File | null,
   });
 
@@ -261,128 +241,6 @@ function WorkspaceTab({ workspace, workspaceTypes = {}, timezones = [] }: Settin
             </div>
           </SettingsSection>
         </Card>
-
-        <Card className="p-5 lg:col-start-2">
-          <SettingsSection
-            title="Invoice details"
-            description="Shown on your tax invoices and payment receipts."
-          >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-ui-text dark:text-ui-dark-text">
-                  Billing name
-                </label>
-                <Input
-                  value={form.data.billing_name}
-                  onChange={(event) => form.setData('billing_name', event.target.value)}
-                />
-                {form.errors.billing_name && (
-                  <p className="mt-2 text-xs text-red-600">{form.errors.billing_name}</p>
-                )}
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-ui-text dark:text-ui-dark-text">
-                  Billing email
-                </label>
-                <Input
-                  value={form.data.billing_email}
-                  onChange={(event) => form.setData('billing_email', event.target.value)}
-                />
-                {form.errors.billing_email && (
-                  <p className="mt-2 text-xs text-red-600">{form.errors.billing_email}</p>
-                )}
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-ui-text dark:text-ui-dark-text">
-                  GSTIN
-                </label>
-                <Input
-                  value={form.data.billing_gstin}
-                  onChange={(event) =>
-                    form.setData('billing_gstin', event.target.value.toUpperCase())
-                  }
-                />
-                {form.errors.billing_gstin && (
-                  <p className="mt-2 text-xs text-red-600">{form.errors.billing_gstin}</p>
-                )}
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-ui-text dark:text-ui-dark-text">
-                  Country
-                </label>
-                <Input
-                  value={form.data.billing_country}
-                  onChange={(event) =>
-                    form.setData('billing_country', event.target.value.toUpperCase())
-                  }
-                />
-                {form.errors.billing_country && (
-                  <p className="mt-2 text-xs text-red-600">{form.errors.billing_country}</p>
-                )}
-              </div>
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-ui-text dark:text-ui-dark-text">
-                  Address line 1
-                </label>
-                <Input
-                  value={form.data.billing_address_line1}
-                  onChange={(event) => form.setData('billing_address_line1', event.target.value)}
-                />
-                {form.errors.billing_address_line1 && (
-                  <p className="mt-2 text-xs text-red-600">{form.errors.billing_address_line1}</p>
-                )}
-              </div>
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-ui-text dark:text-ui-dark-text">
-                  Address line 2
-                </label>
-                <Input
-                  value={form.data.billing_address_line2}
-                  onChange={(event) => form.setData('billing_address_line2', event.target.value)}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-ui-text dark:text-ui-dark-text">
-                  City
-                </label>
-                <Input
-                  value={form.data.billing_city}
-                  onChange={(event) => form.setData('billing_city', event.target.value)}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-ui-text dark:text-ui-dark-text">
-                  State
-                </label>
-                <Input
-                  value={form.data.billing_state}
-                  onChange={(event) => form.setData('billing_state', event.target.value)}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-ui-text dark:text-ui-dark-text">
-                  State code
-                </label>
-                <Input
-                  value={form.data.billing_state_code}
-                  onChange={(event) =>
-                    form.setData('billing_state_code', event.target.value.toUpperCase())
-                  }
-                  placeholder="MH, DL, KA"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-ui-text dark:text-ui-dark-text">
-                  Postal code
-                </label>
-                <Input
-                  value={form.data.billing_postal_code}
-                  onChange={(event) => form.setData('billing_postal_code', event.target.value)}
-                />
-              </div>
-            </div>
-          </SettingsSection>
-        </Card>
       </div>
 
       <div className="flex justify-end gap-2 border-t border-gray-100 pt-2 dark:border-slate-700">
@@ -423,7 +281,7 @@ export default function SettingsIndex({
       id: 'workspace',
       label: 'Workspace',
       icon: Building2,
-      desc: 'Name, logo, timezone & invoice details',
+      desc: 'Name, logo and timezone',
       component: (
         <WorkspaceTab workspace={workspace} workspaceTypes={workspaceTypes} timezones={timezones} />
       ),
@@ -458,8 +316,7 @@ export default function SettingsIndex({
     },
   ];
   const active = tabs.find((tab) => tab.id === activeTab) || tabs[0];
-  // Billing has its own page; it stays reachable from the settings bar above.
-  const visibleTabs = tabs.filter((tab) => tab.id !== 'billing');
+  const visibleTabs = tabs;
 
   return (
     <AppShell>

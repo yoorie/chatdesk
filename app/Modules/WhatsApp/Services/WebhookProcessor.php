@@ -443,8 +443,7 @@ class WebhookProcessor
                 'enabled' => $chatbotsEnabled,
             ]);
 
-            $aiEnabled = $message->direction === 'inbound' && module_enabled($account, 'ai');
-            if ($message->direction === 'inbound' && ($chatbotsEnabled || $aiEnabled)) {
+            if ($message->direction === 'inbound' && $chatbotsEnabled) {
                 DB::afterCommit(function () use ($message, $conversation) {
                     ProcessInboundMessageForBots::dispatchAfterResponse($message, $conversation);
                 });

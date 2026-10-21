@@ -195,11 +195,7 @@ const navPlacement: Record<
   'app.settings': { section: 'Settings', order: 50, icon: 'Settings', label: 'Settings' },
 };
 
-const hiddenUntilRealImplementation = new Set([
-  'app.catalog.index',
-  'app.ecommerce.index',
-  'app.surveys.index',
-]);
+const hiddenUntilRealImplementation = new Set(['app.catalog.index']);
 
 /**
  * Pages that stay reachable but do not need their own sidebar row:

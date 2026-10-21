@@ -510,7 +510,7 @@ class DemoInboxSeeder extends Seeder
             ['Winter sale preview', 'winter_sale', 'scheduled', 0, 0, 0, 0, 0, 2400],
             ['Back in stock: wool coats', 'back_in_stock', 'completed', 342, 340, 331, 198, 2, -7200],
         ] as [$campaignName, $templateName, $status, $total, $sent, $delivered, $read, $failed, $offsetMinutes]) {
-            Campaign::updateOrCreate(
+            $campaign = Campaign::updateOrCreate(
                 ['account_id' => $account->id, 'name' => $campaignName],
                 [
                     'whatsapp_connection_id' => $connection->id,
@@ -532,9 +532,10 @@ class DemoInboxSeeder extends Seeder
                     'completed_at' => $status === 'completed' ? now()->addMinutes($offsetMinutes + 50) : null,
                 ]
             );
+            $this->seedRecipients($campaign, $total, $sent, $delivered, $read, $failed);
         }
 
-        Campaign::updateOrCreate(
+        $weekend = Campaign::updateOrCreate(
             ['account_id' => $account->id, 'name' => 'Weekend restock'],
             [
                 'whatsapp_connection_id' => $connection->id,
@@ -555,6 +556,7 @@ class DemoInboxSeeder extends Seeder
                 'completed_at' => now()->subDays(3)->addHour(),
             ]
         );
+        $this->seedRecipients($weekend, 128, 126, 121, 84, 2);
 
         $key = AccountApiKey::updateOrCreate(
             ['account_id' => $account->id, 'name' => 'Storefront'],
@@ -623,5 +625,47 @@ class DemoInboxSeeder extends Seeder
             'payload' => ['demo' => true],
             'delivered_at' => now()->subMinutes(12),
         ]);
+    }
+
+    /**
+     * Per-recipient rows that match a demo campaign's counters, so its report looks real.
+     */
+    protected function seedRecipients(Campaign $campaign, int $total, int $sent, int $delivered, int $read, int $failed): void
+    {
+        $campaign->recipients()->delete();
+        if ($total <= 0) {
+            return;
+        }
+
+        $first = ['Aarav', 'Diya', 'Kabir', 'Meera', 'Rohan', 'Saanvi', 'Arjun', 'Isha', 'Vivaan', 'Anaya', 'Neil', 'Tara'];
+        $last = ['Sharma', 'Iyer', 'Kapoor', 'Nair', 'Mehta', 'Reddy', 'Das', 'Joshi', 'Bose', 'Khan'];
+        $start = $campaign->started_at ?? now();
+        $rows = [];
+
+        for ($i = 0; $i < $total; $i++) {
+            $sentAt = $start->copy()->addSeconds(5 + $i * 7);
+            $isFailed = $i >= $total - $failed;
+            $isSent = ! $isFailed && $i < $sent;
+            $status = $isFailed ? 'failed' : (! $isSent ? 'pending' : ($i < $read ? 'read' : ($i < $delivered ? 'delivered' : 'sent')));
+
+            $rows[] = [
+                'campaign_id' => $campaign->id,
+                'phone_number' => '9198'.str_pad((string) (20000000 + $campaign->id * 1000 + $i), 8, '0', STR_PAD_LEFT),
+                'name' => $first[$i % count($first)].' '.$last[intdiv($i, count($first)) % count($last)],
+                'status' => $status,
+                'sent_at' => $isSent ? $sentAt : null,
+                'delivered_at' => in_array($status, ['delivered', 'read'], true) ? $sentAt->copy()->addSeconds(4) : null,
+                'read_at' => $status === 'read' ? $sentAt->copy()->addMinutes(3 + $i % 40) : null,
+                'failed_at' => $isFailed ? $sentAt : null,
+                'failure_reason' => $isFailed ? 'Recipient phone number is not on WhatsApp' : null,
+                'attempt_count' => $isSent || $isFailed ? 1 : 0,
+                'created_at' => $start,
+                'updated_at' => $sentAt,
+            ];
+        }
+
+        foreach (array_chunk($rows, 200) as $chunk) {
+            \App\Modules\Broadcasts\Models\CampaignRecipient::insert($chunk);
+        }
     }
 }

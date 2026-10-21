@@ -29,6 +29,7 @@
             "error",
             {
                 "argsIgnorePattern": "^_",
+                "caughtErrors": "none",
                 "caughtErrorsIgnorePattern": "^_",
                 "ignoreRestSiblings": true
             }

@@ -38,7 +38,7 @@ class OperationalAlertService
             return;
         }
 
-        $subject = "[".brand_name()." Alert] {$payload['title']}";
+        $subject = '['.brand_name()." Alert] {$payload['title']}";
         $body = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
         try {

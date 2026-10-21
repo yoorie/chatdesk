@@ -509,9 +509,11 @@ function WebhooksTab({
       onSuccess: () => setOpen(false),
       onFinish: () => setProcessing(false),
     };
-    editing
-      ? router.patch(route('app.developer.webhooks.update', editing.id), form, options)
-      : router.post(route('app.developer.webhooks.store'), form, options);
+    if (editing) {
+      router.patch(route('app.developer.webhooks.update', editing.id), form, options);
+    } else {
+      router.post(route('app.developer.webhooks.store'), form, options);
+    }
   };
 
   const deleteEndpoint = async (id: number) => {

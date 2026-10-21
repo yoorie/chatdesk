@@ -151,5 +151,4 @@ class UsageService
             $usage->increment('meta_estimated_cost_minor', $estimatedCostMinor);
         }
     }
-
 }

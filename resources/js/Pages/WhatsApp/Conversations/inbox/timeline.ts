@@ -33,12 +33,12 @@ const isAutomationRunEvent = (message: ChatMessage): boolean =>
 /**
  * Friendly one-line text for an auto-reply event, or null when it should stay hidden.
  * Only outcomes the team should know about are shown: a reply went out, or it couldn't be sent.
- * "Started", "writing", and "skipped" (e.g. no AI assistant switched on) are hidden.
+ * "Started", "writing", and "skipped" are hidden.
  */
 const automationEventLabel = (message: ChatMessage): string | null => {
   const type = eventType(message);
   if (type === 'automation_completed') {
-    return message.payload?.meta?.chatbot_matched ? 'Replied automatically' : 'AI replied';
+    return 'Replied automatically';
   }
   if (type === 'automation_failed') {
     return "Auto-reply couldn't be sent";

@@ -35,10 +35,8 @@ export default function NotificationsTab() {
     notify_assignment_enabled: Boolean(user?.notify_assignment_enabled ?? true),
     notify_mention_enabled: Boolean(user?.notify_mention_enabled ?? true),
     notify_sound_enabled: Boolean(user?.notify_sound_enabled ?? true),
-    notify_billing_enabled: Boolean(user?.notify_billing_enabled ?? true),
     notify_waba_enabled: Boolean(user?.notify_waba_enabled ?? true),
     notify_automation_enabled: Boolean(user?.notify_automation_enabled ?? true),
-    notify_leads_enabled: Boolean(user?.notify_leads_enabled ?? true),
     notify_templates_enabled: Boolean(user?.notify_templates_enabled ?? true),
     notify_email_enabled: Boolean(user?.notify_email_enabled ?? true),
     notify_in_app_enabled: Boolean(user?.notify_in_app_enabled ?? true),
@@ -89,17 +87,11 @@ export default function NotificationsTab() {
   ] as const;
   const categories = [
     [
-      'notify_billing_enabled',
-      'Billing',
-      'Invoices, failed payments, renewals, and overdue alerts.',
-    ],
-    [
       'notify_waba_enabled',
       'WhatsApp account health',
       'Alerts when your WhatsApp number disconnects or needs attention.',
     ],
     ['notify_automation_enabled', 'Automation', 'Failed automation runs and handoff alerts.'],
-    ['notify_leads_enabled', 'Leads', 'New leads, assignments, and conversion alerts.'],
     ['notify_templates_enabled', 'Templates', 'Template approval, rejection, and quality alerts.'],
   ] as const;
 

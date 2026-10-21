@@ -96,8 +96,7 @@ export default function ChatbotBuilder({
         body_text: 'Choose the next step.',
         buttons: [
           { id: 'pricing', text: 'Pricing' },
-          { id: 'payment', text: 'Payment' },
-          { id: 'ai', text: 'AI agent' },
+          { id: 'support', text: 'Support' },
         ],
       };
     if (type === 'send_template')
@@ -460,7 +459,6 @@ export default function ChatbotBuilder({
                   <option value="any">Any source</option>
                   <option value="ctwa">Click-to-WhatsApp ad</option>
                   <option value="webhook">Organic WhatsApp</option>
-                  <option value="meta_lead">Meta lead</option>
                   <option value="manual">Manual</option>
                 </select>
               </label>

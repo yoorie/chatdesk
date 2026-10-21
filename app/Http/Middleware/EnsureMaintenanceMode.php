@@ -4,8 +4,8 @@ namespace App\Http\Middleware;
 
 use App\Services\PlatformSettingsService;
 use Closure;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureMaintenanceMode
@@ -60,7 +60,6 @@ class EnsureMaintenanceMode
             'message' => $message,
         ], 503);
     }
-
 
     private function shouldBypassMaintenance(Request $request): bool
     {

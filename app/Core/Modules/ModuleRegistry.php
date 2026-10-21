@@ -34,29 +34,14 @@ class ModuleRegistry
 
     /**
      * Get enabled modules for a account.
-     * This checks both account module toggles AND plan entitlements.
+     * A module is enabled when it is on for the install and not switched off for the organisation.
      */
     public function getEnabledForAccount($account): Collection
     {
-        $settingsService = app(\App\Services\PlatformSettingsService::class);
-        $analyticsEnabled = $settingsService->isFeatureEnabled('analytics');
-
         $moduleAccess = app(\App\Core\Modules\ModuleAccess::class);
         $effectiveModuleKeys = $moduleAccess->getEffectiveModules($account);
 
-        return $this->all()->filter(function ($module) use ($effectiveModuleKeys, $analyticsEnabled) {
-            $moduleKey = $module['key'];
-
-            if (! in_array($moduleKey, $effectiveModuleKeys, true)) {
-                return false;
-            }
-
-            if ($moduleKey === 'analytics' && ! $analyticsEnabled) {
-                return false;
-            }
-
-            return true;
-        });
+        return $this->all()->filter(fn ($module) => in_array($module['key'], $effectiveModuleKeys, true));
     }
 
     /**

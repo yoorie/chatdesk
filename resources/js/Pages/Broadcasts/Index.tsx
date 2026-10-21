@@ -1136,14 +1136,16 @@ function CampaignDetailDrawer({
           message={testForm.errors.phone || (testForm.errors as Record<string, string>).error}
         />
 
-        {campaign.diagnostics?.preflight?.errors?.length ? (
+        {['draft', 'scheduled', 'paused'].includes(campaign.status) &&
+        campaign.diagnostics?.preflight?.errors?.length ? (
           <div className="rounded-btn border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
             {campaign.diagnostics.preflight.errors.map((error) => (
               <p key={error}>{error}</p>
             ))}
           </div>
         ) : null}
-        {campaign.diagnostics?.preflight?.warnings?.length ? (
+        {['draft', 'scheduled', 'paused'].includes(campaign.status) &&
+        campaign.diagnostics?.preflight?.warnings?.length ? (
           <div className="rounded-btn border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
             {campaign.diagnostics.preflight.warnings.map((warning) => (
               <p key={warning}>{warning}</p>

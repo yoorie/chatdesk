@@ -68,7 +68,7 @@ class TemplateController extends Controller
 
         $serializeTemplate = function ($template) {
             $sendStats = $template->sends()
-                ->selectRaw("status, count(*) as total")
+                ->selectRaw('status, count(*) as total')
                 ->groupBy('status')
                 ->pluck('total', 'status');
 

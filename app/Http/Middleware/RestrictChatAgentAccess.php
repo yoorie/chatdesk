@@ -29,8 +29,6 @@ class RestrictChatAgentAccess
         'app.whatsapp.templates' => 'templates',
         'app.broadcasts' => 'campaigns',
         'app.chatbots' => 'automation',
-        'app.analytics' => 'analytics',
-        'app.billing' => 'billing',
         'app.settings' => 'settings',
         'app.workspaces' => 'settings',
         'app.team' => 'team',

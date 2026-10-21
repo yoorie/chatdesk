@@ -18,7 +18,6 @@ import {
   Search,
   Tag,
   Users,
-  Wallet,
   XCircle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -38,7 +37,6 @@ const filters = [
   { id: 'inbox', label: 'Inbox' },
   { id: 'template', label: 'Templates' },
   { id: 'automation', label: 'Automation' },
-  { id: 'billing', label: 'Billing' },
 ];
 
 function classify(log: ActivityLog) {
@@ -51,8 +49,6 @@ function classify(log: ActivityLog) {
   if (text.includes('contact')) return 'contact';
   if (text.includes('template')) return 'template';
   if (text.includes('bot') || text.includes('automation')) return 'automation';
-  if (text.includes('billing') || text.includes('payment') || text.includes('wallet'))
-    return 'billing';
   return 'all';
 }
 
@@ -64,7 +60,6 @@ function iconFor(category: string, type: string) {
   if (category === 'contact') return { icon: Users, tone: 'blue' as const };
   if (category === 'template') return { icon: FileText, tone: 'amber' as const };
   if (category === 'automation') return { icon: Bot, tone: 'purple' as const };
-  if (category === 'billing') return { icon: Wallet, tone: 'green' as const };
   if (category === 'inbox') return { icon: MessageSquare, tone: 'blue' as const };
   return { icon: Activity, tone: 'gray' as const };
 }
@@ -114,7 +109,6 @@ export default function ActivityLogsIndex({ logs }: { account: any; logs: Activi
       errors: logs.filter((log) => log.type.includes('error') || log.type.includes('failed'))
         .length,
       inbox: logs.filter((log) => classify(log) === 'inbox').length,
-      billing: logs.filter((log) => classify(log) === 'billing').length,
     }),
     [logs]
   );
@@ -134,12 +128,6 @@ export default function ActivityLogsIndex({ logs }: { account: any; logs: Activi
               value: counts.inbox,
               icon: MessageSquare,
               tone: 'green' as const,
-            },
-            {
-              label: 'Billing events',
-              value: counts.billing,
-              icon: Wallet,
-              tone: 'amber' as const,
             },
             {
               label: 'Errors',
