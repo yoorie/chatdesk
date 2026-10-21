@@ -120,25 +120,6 @@ export default function ChatbotBuilder({
       return { action_type: 'add_tag', tag_id: automationOptions.tags[0]?.id || '', tag_name: '' };
     if (type === 'update_contact')
       return { action_type: 'update_contact', status: 'active', source: 'automation' };
-    if (type === 'create_deal')
-      return {
-        action_type: 'create_deal',
-        title: 'WhatsApp lead',
-        stage: 'new',
-        value: 0,
-        currency: 'INR',
-        source: 'automation',
-      };
-    if (type === 'create_appointment')
-      return {
-        action_type: 'create_appointment',
-        title: `${brandName()} demo call`,
-        minutes_from_now: 60,
-        duration_minutes: 30,
-        type: 'Demo',
-        reminder_enabled: true,
-        reminder_minutes_before: 30,
-      };
     if (type === 'handoff')
       return {
         action_type: 'handoff',

@@ -112,8 +112,6 @@ interface SidebarProps {
   account: {
     slug?: string;
     name?: string;
-    plan?: { name?: string } | null;
-    subscription?: { plan?: { name?: string } | null } | null;
     workspace_type_label?: string | null;
     workspace_type?: string | null;
   } | null;
@@ -124,7 +122,7 @@ interface SidebarProps {
 
 interface NavSection {
   label: string;
-  items: Array<NavItem & { order: number; locked?: boolean; requiredPlan?: string | null }>;
+  items: Array<NavItem & { order: number }>;
 }
 
 /**
@@ -214,10 +212,6 @@ const reachableElsewhere = new Set([
   'app.notifications.index',
 ]);
 
-interface LockedNavItem extends NavItem {
-  required_plan?: string | null;
-}
-
 export function Sidebar({
   navigation,
   currentRoute,
@@ -226,10 +220,7 @@ export function Sidebar({
   onClose,
   onCollapseChange,
 }: SidebarProps) {
-  const { auth, inbox_summary, locked_navigation } = usePage().props as any;
-  const lockedNavigation: LockedNavItem[] = Array.isArray(locked_navigation)
-    ? locked_navigation
-    : [];
+  const { auth, inbox_summary } = usePage().props as any;
   const user = auth?.user;
   const inboxUnread = Number(inbox_summary?.unread || 0);
   const [collapsed, setCollapsed] = useState(false);
@@ -287,12 +278,7 @@ export function Sidebar({
     ? `${tryRouteHref('app.settings')}?tab=profile`
     : '#';
 
-  const accountDescriptor =
-    account?.subscription?.plan?.name ||
-    account?.plan?.name ||
-    account?.workspace_type_label ||
-    account?.workspace_type ||
-    'Workspace';
+  const accountDescriptor = account?.workspace_type_label || account?.workspace_type || 'Workspace';
 
   const safeNavigation = navigation.reduce<NavItem[]>((items, item) => {
     if (hiddenUntilRealImplementation.has(item.href) || reachableElsewhere.has(item.href)) {
@@ -307,43 +293,26 @@ export function Sidebar({
     return items;
   }, []);
 
-  // Features the current plan does not include: show them, locked, with an upgrade hint.
-  const lockedItems = lockedNavigation.filter(
-    (item) =>
-      item.href &&
-      navPlacement[item.href] &&
-      !hiddenUntilRealImplementation.has(item.href) &&
-      !safeNavigation.some((existing) => existing.href === item.href)
-  );
+  type PlacedItem = NavItem & { order: number };
+  const sections = safeNavigation.reduce<Record<string, PlacedItem[]>>((acc, item: NavItem) => {
+    const placement = navPlacement[item.href] ?? {
+      section: item.group || 'Workspace',
+      order: 100,
+    };
 
-  type PlacedItem = NavItem & { order: number; locked?: boolean; requiredPlan?: string | null };
-  const sections = [
-    ...safeNavigation,
-    ...lockedItems.map((item) => ({ ...item, locked: true })),
-  ].reduce<Record<string, PlacedItem[]>>(
-    (acc, item: NavItem & { locked?: boolean; required_plan?: string | null }) => {
-      const placement = navPlacement[item.href] ?? {
-        section: item.group || 'Workspace',
-        order: 100,
-      };
+    if (!acc[placement.section]) {
+      acc[placement.section] = [];
+    }
 
-      if (!acc[placement.section]) {
-        acc[placement.section] = [];
-      }
+    acc[placement.section].push({
+      ...item,
+      label: placement.label ?? item.label,
+      icon: placement.icon ?? item.icon,
+      order: placement.order,
+    });
 
-      acc[placement.section].push({
-        ...item,
-        label: placement.label ?? item.label,
-        icon: placement.icon ?? item.icon,
-        order: placement.order,
-        locked: Boolean(item.locked),
-        requiredPlan: item.required_plan ?? null,
-      });
-
-      return acc;
-    },
-    {}
-  );
+    return acc;
+  }, {});
 
   const orderedSections: NavSection[] = sectionOrder
     .map((label) => ({
@@ -427,7 +396,6 @@ export function Sidebar({
         .map((section) => {
           // A folded group still opens when you are on one of its pages.
           const hasActive = section.items.some((item) => {
-            if (item.locked) return false;
             const href = resolveRouteHref(item.href);
             return href ? isCurrentPath(href) : false;
           });

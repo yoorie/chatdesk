@@ -113,28 +113,6 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(NotificationFailed::class, [\App\Listeners\TrackNotificationDelivery::class, 'handleFailed']);
         Event::listen(MessageSent::class, [\App\Listeners\TrackMailDelivery::class, 'handle']);
 
-        // Route model binding for 'plan' parameter - resolve by key (slug) instead of ID
-        Route::bind('plan', function ($value) {
-            // Try to resolve by key first (slug), fallback to ID for backward compatibility
-            $plan = \App\Models\Plan::where('key', $value)->orWhere('id', $value)->first();
-            if (! $plan) {
-                abort(404, 'Plan not found');
-            }
-
-            return $plan;
-        });
-
-        // Route model binding for 'subscription' parameter - resolve by slug instead of ID
-        Route::bind('subscription', function ($value) {
-            // Try to resolve by slug first, fallback to ID for backward compatibility
-            $subscription = \App\Models\Subscription::where('slug', $value)->orWhere('id', $value)->first();
-            if (! $subscription) {
-                abort(404, 'Subscription not found');
-            }
-
-            return $subscription;
-        });
-
         // Route model binding for 'template' parameter - resolve by slug instead of ID
         Route::bind('template', function ($value) {
             // Try to resolve by slug first, fallback to ID for backward compatibility

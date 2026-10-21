@@ -8,7 +8,6 @@ use App\Modules\Chatbots\Models\BotNode;
 use App\Modules\WhatsApp\Models\WhatsAppConversation;
 use App\Modules\WhatsApp\Models\WhatsAppMessage;
 use App\Modules\WhatsApp\Services\ConversationThreadService;
-use App\Models\WhatsAppCall;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
@@ -113,42 +112,10 @@ class InboxStreamController extends Controller
             })
             ->values();
 
-        $updatedCalls = collect();
-        if (Schema::hasTable('ai_voice_calls')) {
-            $updatedCalls = WhatsAppCall::with('agent:id,name')
-                ->where('account_id', $account->id)
-                ->where('updated_at', '>', $sinceDate)
-                ->latest()
-                ->limit(50)
-                ->get()
-                ->map(fn (WhatsAppCall $call) => [
-                    'id' => $call->id,
-                    'whatsapp_connection_id' => $call->whatsapp_connection_id,
-                    'direction' => $call->direction,
-                    'phone_number' => $call->phone_number,
-                    'contact_name' => $call->contact_name,
-                    'status' => $call->status,
-                    'route_mode' => $call->route_mode,
-                    'routed_to' => $call->routed_to,
-                    'provider_call_id' => $call->provider_call_id,
-                    'duration_seconds' => $call->duration_seconds,
-                    'summary' => $call->summary,
-                    'metadata' => $call->metadata ?? [],
-                    'agent' => $call->agent ? [
-                        'id' => $call->agent->id,
-                        'name' => $call->agent->name,
-                    ] : null,
-                    'created_at' => $call->created_at?->toIso8601String(),
-                    'updated_at' => $call->updated_at?->toIso8601String(),
-                ])
-                ->values();
-        }
-
         return response()->json([
             'server_time' => now()->toIso8601String(),
             'updated_conversations' => $updatedConversations,
-            'new_message_notifications' => $newMessageNotifications,
-            'updated_calls' => $updatedCalls]);
+            'new_message_notifications' => $newMessageNotifications]);
     }
 
     /**

@@ -25,7 +25,7 @@ const AUTOMATION_RUN_EVENTS = new Set([
 
 const eventType = (message: ChatMessage): string => String(message.payload?.event_type ?? '');
 
-export const isAutomationRunEvent = (message: ChatMessage): boolean =>
+const isAutomationRunEvent = (message: ChatMessage): boolean =>
   message.type === 'automation_status' &&
   (message.payload?.meta?.status_kind === 'automation' ||
     AUTOMATION_RUN_EVENTS.has(eventType(message)));
@@ -35,7 +35,7 @@ export const isAutomationRunEvent = (message: ChatMessage): boolean =>
  * Only outcomes the team should know about are shown: a reply went out, or it couldn't be sent.
  * "Started", "writing", and "skipped" (e.g. no AI assistant switched on) are hidden.
  */
-export const automationEventLabel = (message: ChatMessage): string | null => {
+const automationEventLabel = (message: ChatMessage): string | null => {
   const type = eventType(message);
   if (type === 'automation_completed') {
     return message.payload?.meta?.chatbot_matched ? 'Replied automatically' : 'AI replied';

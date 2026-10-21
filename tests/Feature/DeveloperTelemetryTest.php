@@ -21,7 +21,6 @@ class DeveloperTelemetryTest extends TestCase
         parent::setUp();
 
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
         PlatformSetting::set('features.public_api', true, 'boolean', 'features');
         PlatformSetting::set('integrations.api_enabled', true, 'boolean', 'integrations');
         PlatformSetting::set('integrations.api_key', '', 'string', 'integrations');
@@ -29,7 +28,7 @@ class DeveloperTelemetryTest extends TestCase
 
     public function test_public_api_requests_are_persisted_for_developer_ledger(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         [, $token] = AccountApiKey::issue($account, 'Telemetry key', ['connections:read']);
 
         $this->getJson(route('api.whatsapp.connections'), [
@@ -62,7 +61,7 @@ class DeveloperTelemetryTest extends TestCase
             'https://example.com/webhook' => Http::response(['ok' => true], 202),
         ]);
 
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $endpoint = AccountWebhookEndpoint::create([
             'account_id' => $account->id,
             'url' => 'https://example.com/webhook',

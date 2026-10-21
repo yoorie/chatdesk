@@ -865,9 +865,7 @@ function CampaignCreateDrawer({
             </div>
 
             <div className="border-t border-gray-100 pt-4 dark:border-ui-dark-border">
-              <p className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-                Tracking
-              </p>
+              <p className="text-sm font-medium text-ui-text dark:text-ui-dark-text">Tracking</p>
               <p className={hintClass}>Helps reports show where replies came from.</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div>
@@ -1167,9 +1165,7 @@ function CampaignDetailDrawer({
               key={label}
               className="rounded-card border border-gray-100 px-3 py-2.5 dark:border-ui-dark-border"
             >
-              <p className="text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
-                {label}
-              </p>
+              <p className="text-xs text-ui-text-muted dark:text-ui-dark-text-muted">{label}</p>
               <p
                 className={`text-lg font-bold tabular-nums ${label === 'Failed' && value > 0 ? 'text-red-600 dark:text-red-300' : 'text-ui-text dark:text-ui-dark-text'}`}
               >
@@ -1236,9 +1232,7 @@ function CampaignDetailDrawer({
               .filter(([, value]) => Boolean(value))
               .map(([label, value]) => (
                 <div key={label} className="flex justify-between gap-4">
-                  <dt className="text-ui-text-muted dark:text-ui-dark-text-muted">
-                    {label}
-                  </dt>
+                  <dt className="text-ui-text-muted dark:text-ui-dark-text-muted">{label}</dt>
                   <dd className="text-right font-medium text-ui-text dark:text-ui-dark-text">
                     {value}
                   </dd>

@@ -308,37 +308,6 @@ class PlatformSettingsService
     }
 
     /**
-     * Apply payment configuration from platform settings.
-     */
-    public function applyPaymentConfig(): void
-    {
-        $razorpayEnabled = $this->get('payment.razorpay_enabled', false);
-        $razorpayKeyId = $this->get('payment.razorpay_key_id');
-        $razorpayKeySecret = $this->get('payment.razorpay_key_secret');
-        $razorpayWebhookSecret = $this->get('payment.razorpay_webhook_secret');
-        $defaultCurrency = $this->get('payment.default_currency', 'INR');
-        $currencyPosition = $this->get('payment.currency_symbol_position', 'before');
-        $taxRate = $this->get('payment.tax_rate', 0);
-
-        if ($razorpayEnabled) {
-            if ($razorpayKeyId) {
-                config(['services.razorpay.key_id' => $razorpayKeyId]);
-            }
-            if ($razorpayKeySecret) {
-                config(['services.razorpay.key_secret' => $razorpayKeySecret]);
-            }
-            if ($razorpayWebhookSecret) {
-                config(['services.razorpay.webhook_secret' => $razorpayWebhookSecret]);
-            }
-        }
-
-        // Store payment settings in config for easy access
-        config(['payment.default_currency' => $defaultCurrency]);
-        config(['payment.currency_symbol_position' => $currencyPosition]);
-        config(['payment.tax_rate' => $taxRate]);
-    }
-
-    /**
      * Apply performance configuration from platform settings.
      */
     public function applyPerformanceConfig(): void
@@ -416,47 +385,5 @@ class PlatformSettingsService
                 'time_ms' => $query->time,
             ]);
         });
-    }
-
-    /**
-     * Apply AI configuration from platform settings.
-     */
-    public function applyAIConfig(): void
-    {
-        $aiEnabled = $this->get('ai.enabled', false);
-        $provider = $this->get('ai.provider', 'openai');
-        $openaiApiKey = $this->get('ai.openai_api_key');
-        $openaiModel = $this->get('ai.openai_model', 'gpt-4o-mini');
-        $anthropicApiKey = $this->get('ai.anthropic_api_key');
-        $anthropicModel = $this->get('ai.anthropic_model', 'claude-3-5-haiku-20241022');
-        $geminiApiKey = $this->get('ai.gemini_api_key');
-        $geminiModel = $this->get('ai.gemini_model', 'gemini-2.0-flash');
-        $temperature = $this->get('ai.temperature', 0.2);
-        $maxTokens = $this->get('ai.max_tokens', 300);
-
-        if ($aiEnabled) {
-            config(['ai.enabled' => true]);
-            config(['ai.provider' => $provider]);
-
-            if ($provider === 'openai' && $openaiApiKey) {
-                config(['ai.openai.api_key' => $openaiApiKey]);
-                config(['ai.openai.model' => $openaiModel]);
-            }
-
-            if ($provider === 'anthropic' && $anthropicApiKey) {
-                config(['ai.anthropic.api_key' => $anthropicApiKey]);
-                config(['ai.anthropic.model' => $anthropicModel]);
-            }
-
-            if ($provider === 'gemini' && $geminiApiKey) {
-                config(['ai.gemini.api_key' => $geminiApiKey]);
-                config(['ai.gemini.model' => $geminiModel]);
-            }
-
-            config(['ai.temperature' => $temperature]);
-            config(['ai.max_tokens' => $maxTokens]);
-        } else {
-            config(['ai.enabled' => false]);
-        }
     }
 }

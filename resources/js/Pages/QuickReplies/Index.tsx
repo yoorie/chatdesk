@@ -13,16 +13,7 @@ import { useConfirm } from '@/hooks/useConfirm';
 import { useToast } from '@/hooks/useToast';
 import AppShell from '@/Layouts/AppShell';
 import { Head, router, useForm } from '@inertiajs/react';
-import {
-  Copy,
-  Edit3,
-  MessageSquareText,
-  Plus,
-  Power,
-  Search,
-  Trash2,
-  Zap,
-} from 'lucide-react';
+import { Copy, Edit3, MessageSquareText, Plus, Power, Search, Trash2, Zap } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type QuickReply = {

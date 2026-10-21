@@ -8,7 +8,6 @@ import {
   MapPin,
   MessageSquare,
   Mic,
-  Phone,
   Reply,
   Zap,
 } from 'lucide-react';
@@ -17,10 +16,8 @@ import { Fragment } from 'react';
 import { ChatAudioPlayer } from './ChatAudioPlayer';
 import { ChatVideoCard } from './ChatVideoCard';
 import {
-  callTranscriptSpeaker,
   canReactToMessage,
   HOVER_REACTIONS,
-  isCallTranscriptMessage,
   messageStatusIcon,
   timelineBadgeForMessage,
 } from './helpers';
@@ -153,7 +150,6 @@ export function MessageTimeline({
               );
             }
             const outbound = message.direction === 'outbound';
-            const isCallTranscript = isCallTranscriptMessage(message);
             const mediaPayload = message.payload?.[message.type] ?? {};
             const text =
               message.text_body ||
@@ -181,7 +177,7 @@ export function MessageTimeline({
                 {dateSeparator}
                 <div className={`flex ${outbound ? 'justify-end' : 'justify-start'}`}>
                   <div
-                    className={`group relative max-w-[82%] rounded-lg px-4 py-2.5 text-sm shadow-sm ${isCallTranscript ? 'ring-1 ring-emerald-200 dark:ring-emerald-500/30' : ''} ${outbound ? 'bg-[#DCF8C6] text-ui-text dark:bg-[#005C4B] dark:text-white' : 'bg-white text-ui-text dark:bg-[#202C33] dark:text-ui-dark-text'}`}
+                    className={`group relative max-w-[82%] rounded-lg px-4 py-2.5 text-sm shadow-sm ${outbound ? 'bg-[#DCF8C6] text-ui-text dark:bg-[#005C4B] dark:text-white' : 'bg-white text-ui-text dark:bg-[#202C33] dark:text-ui-dark-text'}`}
                   >
                     <div
                       className={`inbox-message-actionbar pointer-events-none absolute top-1 z-20 flex items-center gap-1 overflow-x-auto rounded-full bg-white/95 px-1.5 py-1 opacity-0 shadow-pop ring-1 ring-gray-100 transition group-hover:pointer-events-auto group-hover:opacity-100 dark:bg-slate-800/95 dark:ring-slate-700 ${outbound ? 'right-1' : 'left-1'}`}
@@ -239,14 +235,6 @@ export function MessageTimeline({
                           </div>
                         );
                       })()}
-                    {isCallTranscript && (
-                      <div
-                        className={`mb-2 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${outbound ? 'bg-white/50 text-emerald-800 dark:bg-white/10 dark:text-emerald-100' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200'}`}
-                      >
-                        <Phone className="h-3 w-3" />
-                        Call transcript · {callTranscriptSpeaker(message)}
-                      </div>
-                    )}
                     {message.type === 'interactive' && (
                       <div className="mb-2 rounded-lg bg-white/50 p-3 text-xs ring-1 ring-black/5 dark:bg-black/10 dark:ring-white/10">
                         <div className="mb-1 flex items-center gap-2 font-semibold">

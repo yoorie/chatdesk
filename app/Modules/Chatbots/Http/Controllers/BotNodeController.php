@@ -134,7 +134,7 @@ class BotNodeController extends Controller
 
             if ($type === 'action') {
                 $actionType = $config['action_type'] ?? null;
-                $allowed = ['send_text', 'send_template', 'send_buttons', 'send_list', 'send_media', 'send_flow', 'assign_agent', 'add_tag', 'add_segment', 'update_contact', 'create_deal', 'create_appointment', 'set_status', 'set_priority', 'handoff'];
+                $allowed = ['send_text', 'send_template', 'send_buttons', 'send_list', 'send_media', 'send_flow', 'assign_agent', 'add_tag', 'add_segment', 'update_contact', 'set_status', 'set_priority', 'handoff'];
                 if (! $actionType || ! in_array($actionType, $allowed, true)) {
                     $validator->errors()->add('config.action_type', 'Invalid action type.');
                 }
@@ -180,9 +180,6 @@ class BotNodeController extends Controller
                     }
                 }
 
-                if ($actionType === 'create_deal' && trim((string) ($config['title'] ?? '')) === '') {
-                    $validator->errors()->add('config.title', 'Deal title is required.');
-                }
             }
 
             if ($type === 'condition') {

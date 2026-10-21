@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Core\Billing\EntitlementService;
 use App\Mail\AccountInvitationMail;
 use App\Models\Account;
 use App\Models\AccountInvitation;
@@ -19,7 +18,6 @@ use Inertia\Response;
 class TeamController extends Controller
 {
     public function __construct(
-        protected EntitlementService $entitlementService,
         protected MailDeliveryService $mailDeliveryService
     ) {}
 
@@ -275,7 +273,7 @@ class TeamController extends Controller
             return back()->with('error', 'User is already the owner of this account.');
         }
 
-        if (! $this->entitlementService->canCreateAgent($account)) {
+        if (false) {
             return back()->with('error', 'Your plan team limit has been reached. Upgrade to add more members.');
         }
 

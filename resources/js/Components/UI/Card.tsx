@@ -33,10 +33,7 @@ export function CardHeader({ className, children, ...props }: CardProps) {
 export function CardTitle({ className, children, ...props }: CardProps) {
   return (
     <h3
-      className={cn(
-        'text-base font-semibold text-ui-text dark:text-ui-dark-text',
-        className
-      )}
+      className={cn('text-base font-semibold text-ui-text dark:text-ui-dark-text', className)}
       {...props}
     >
       {children}
@@ -47,10 +44,7 @@ export function CardTitle({ className, children, ...props }: CardProps) {
 export function CardDescription({ className, children, ...props }: CardProps) {
   return (
     <p
-      className={cn(
-        'mt-1 text-sm text-ui-text-muted dark:text-ui-dark-text-muted',
-        className
-      )}
+      className={cn('mt-1 text-sm text-ui-text-muted dark:text-ui-dark-text-muted', className)}
       {...props}
     >
       {children}

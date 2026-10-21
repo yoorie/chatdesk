@@ -89,7 +89,7 @@ class BotFlowController extends Controller
                 }
 
                 $allowedNodeTypes = ['condition', 'action', 'delay', 'webhook'];
-                $allowedActionTypes = ['send_text', 'send_template', 'send_buttons', 'send_list', 'send_media', 'send_flow', 'assign_agent', 'add_tag', 'add_segment', 'update_contact', 'create_deal', 'create_appointment', 'set_status', 'set_priority', 'handoff'];
+                $allowedActionTypes = ['send_text', 'send_template', 'send_buttons', 'send_list', 'send_media', 'send_flow', 'assign_agent', 'add_tag', 'add_segment', 'update_contact', 'set_status', 'set_priority', 'handoff'];
                 $allowedConditionTypes = ['text_contains', 'text_equals', 'text_starts_with', 'regex_match', 'time_window', 'connection_is', 'conversation_status', 'tags_contains'];
 
                 foreach ($nodes as $i => $node) {

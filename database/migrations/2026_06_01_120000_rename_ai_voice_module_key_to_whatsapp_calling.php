@@ -2,7 +2,6 @@
 
 use App\Models\AccountModule;
 use App\Models\Module;
-use App\Models\Plan;
 use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
@@ -24,18 +23,6 @@ return new class extends Migration
         AccountModule::where('module_key', 'ai.voice')->update([
             'module_key' => 'whatsapp.calling',
         ]);
-
-        Plan::query()->get()->each(function (Plan $plan) {
-            $modules = collect($plan->modules ?? [])
-                ->map(fn ($module) => $module === 'ai.voice' ? 'whatsapp.calling' : $module)
-                ->unique()
-                ->values()
-                ->all();
-
-            if ($modules !== ($plan->modules ?? [])) {
-                $plan->forceFill(['modules' => $modules])->save();
-            }
-        });
     }
 
     public function down(): void
@@ -53,18 +40,6 @@ return new class extends Migration
         AccountModule::where('module_key', 'whatsapp.calling')->update([
             'module_key' => 'ai.voice',
         ]);
-
-        Plan::query()->get()->each(function (Plan $plan) {
-            $modules = collect($plan->modules ?? [])
-                ->map(fn ($module) => $module === 'whatsapp.calling' ? 'ai.voice' : $module)
-                ->unique()
-                ->values()
-                ->all();
-
-            if ($modules !== ($plan->modules ?? [])) {
-                $plan->forceFill(['modules' => $modules])->save();
-            }
-        });
 
         Module::where('key', 'whatsapp.calling')->delete();
     }

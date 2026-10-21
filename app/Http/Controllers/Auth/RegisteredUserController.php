@@ -54,7 +54,7 @@ class RegisteredUserController extends Controller
 
         if ($isFirstUser) {
             $user->forceFill(['email_verified_at' => now()])->save();
-            $account = $provisioner->create($user, config('app.name', 'ChatDesk'), null, ['workspace_type' => 'business']);
+            $account = $provisioner->create($user, config('app.name', 'ChatDesk'), ['workspace_type' => 'business']);
         } else {
             $account = $invitation->account;
             if ($account && ! $account->users()->where('user_id', $user->id)->exists()) {

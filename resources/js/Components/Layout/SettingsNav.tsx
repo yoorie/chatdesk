@@ -12,7 +12,7 @@ export interface SettingsNavLink {
 }
 
 /** Every settings area in one place, in the order customers usually need them. */
-export const SETTINGS_LINKS: SettingsNavLink[] = [
+const SETTINGS_LINKS: SettingsNavLink[] = [
   {
     key: 'general',
     label: 'General',
@@ -58,7 +58,7 @@ function safeRoute(name: string, params: Record<string, unknown> = {}): string |
   }
 }
 
-export function settingsLinks(): Array<SettingsNavLink & { href: string }> {
+function settingsLinks(): Array<SettingsNavLink & { href: string }> {
   return SETTINGS_LINKS.map((link) => ({
     ...link,
     href: safeRoute(link.route, link.params),

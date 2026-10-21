@@ -56,10 +56,8 @@ class GlobalSearchController extends Controller
             ['id' => 'campaigns', 'type' => 'page', 'label' => 'Campaigns', 'description' => 'Broadcast campaigns and delivery', 'route' => 'app.broadcasts.index'],
             ['id' => 'contacts', 'type' => 'page', 'label' => 'Contacts', 'description' => 'Audience records, tags, and segments', 'route' => 'app.contacts.index'],
             ['id' => 'segments', 'type' => 'page', 'label' => 'Segments', 'description' => 'Dynamic contact audiences', 'route' => 'app.contacts.segments.index'],
-            ['id' => 'billing', 'type' => 'page', 'label' => 'Billing', 'description' => 'Plan, wallet, usage, and invoices', 'route' => 'app.billing.index'],
             ['id' => 'waba', 'type' => 'page', 'label' => 'WABA Account', 'description' => 'WhatsApp Business API connection', 'route' => 'app.whatsapp.connections.index'],
             ['id' => 'developer', 'type' => 'page', 'label' => 'Developer', 'description' => 'API keys, webhooks, and usage ledger', 'route' => 'app.developer.index'],
-            ['id' => 'support', 'type' => 'page', 'label' => 'Support', 'description' => 'Workspace support tickets', 'route' => 'app.support.index'],
             ['id' => 'settings', 'type' => 'page', 'label' => 'Settings', 'description' => 'Workspace and profile settings', 'route' => 'app.settings'],
         ];
 
@@ -214,7 +212,6 @@ class GlobalSearchController extends Controller
                 'href' => $this->href('app.whatsapp.connections.index'),
             ]);
     }
-
 
     protected function likeAny(Builder $builder, string $query, array $columns): void
     {

@@ -1,14 +1,14 @@
 import { type LocationMapState } from './types';
 
-export const LOCATION_MAP_WIDTH = 336;
+const LOCATION_MAP_WIDTH = 336;
 
-export const LOCATION_MAP_HEIGHT = 192;
+const LOCATION_MAP_HEIGHT = 192;
 
-export const LOCATION_TILE_SIZE = 256;
+const LOCATION_TILE_SIZE = 256;
 
-export const clampLocationLat = (lat: number) => Math.max(-85, Math.min(85, lat));
+const clampLocationLat = (lat: number) => Math.max(-85, Math.min(85, lat));
 
-export const clampLocationLng = (lng: number) => ((((lng + 180) % 360) + 360) % 360) - 180;
+const clampLocationLng = (lng: number) => ((((lng + 180) % 360) + 360) % 360) - 180;
 
 export const locationToWorldPixel = (lat: number, lng: number, zoom: number) => {
   const scale = LOCATION_TILE_SIZE * 2 ** zoom;

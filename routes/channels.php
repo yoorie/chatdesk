@@ -110,5 +110,3 @@ Broadcast::channel('account.{accountId}.whatsapp.conversation.{conversationId}',
 | Support Channels
 |--------------------------------------------------------------------------
 */
-
-

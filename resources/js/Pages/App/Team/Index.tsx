@@ -2,13 +2,7 @@ import SettingsNav from '@/Components/Layout/SettingsNav';
 import TextInput from '@/Components/TextInput';
 import Button from '@/Components/UI/Button';
 import { Card, CardHeader, CardTitle } from '@/Components/UI/Card';
-import {
-  Avatar,
-  IconButton,
-  PageHeader,
-  StatusBadge,
-  TagPill,
-} from '@/Components/UI/Elements';
+import { Avatar, IconButton, PageHeader, StatusBadge, TagPill } from '@/Components/UI/Elements';
 import { useNotifications } from '@/hooks/useNotifications';
 import AppShell from '@/Layouts/AppShell';
 import { Head, router } from '@inertiajs/react';
@@ -123,9 +117,7 @@ function Drawer({
       <aside className="relative flex h-full w-full max-w-xl flex-col overflow-hidden border-l border-gray-200 bg-white shadow-pop dark:border-ui-dark-border dark:bg-ui-dark-surface">
         <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-ui-dark-border">
           <div>
-            <h2 className="text-lg font-semibold text-ui-text dark:text-ui-dark-text">
-              {title}
-            </h2>
+            <h2 className="text-lg font-semibold text-ui-text dark:text-ui-dark-text">{title}</h2>
             {description && (
               <p className="mt-1 text-sm text-ui-text-muted dark:text-ui-dark-text-muted">
                 {description}
@@ -633,9 +625,7 @@ export default function TeamIndex({
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-              Role
-            </label>
+            <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">Role</label>
             <select
               value={inviteRole}
               onChange={(event) => setInviteRole(event.target.value)}
@@ -689,9 +679,7 @@ export default function TeamIndex({
             />
           </div>
           <div>
-            <p className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-              Permissions
-            </p>
+            <p className="text-sm font-medium text-ui-text dark:text-ui-dark-text">Permissions</p>
             <div className="mt-3 space-y-4">
               {Object.entries(groupedPermissions).map(([group, items]) => (
                 <div

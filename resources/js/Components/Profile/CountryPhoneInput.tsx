@@ -1,7 +1,7 @@
 import InputError from '@/Components/InputError';
 import { Phone } from 'lucide-react';
 
-export const countryCodes = [
+const countryCodes = [
   { code: '+91', country: 'India', timezone: 'Asia/Kolkata', placeholder: '99887 76655' },
   {
     code: '+1',

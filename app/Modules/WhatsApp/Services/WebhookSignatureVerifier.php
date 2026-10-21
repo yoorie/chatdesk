@@ -2,10 +2,8 @@
 
 namespace App\Modules\WhatsApp\Services;
 
-use App\Models\AccountIntegration;
 use App\Models\PlatformSetting;
 use App\Modules\WhatsApp\Models\WhatsAppConnection;
-use App\Support\SchemaCache;
 use Illuminate\Http\Request;
 
 class WebhookSignatureVerifier
@@ -113,18 +111,6 @@ class WebhookSignatureVerifier
 
         foreach (explode(',', (string) config('whatsapp.webhook.app_secrets', '')) as $secret) {
             $this->pushSecret($secrets, $secret);
-        }
-
-        if (($accountId !== null || $allAccounts) && SchemaCache::hasTable('account_integrations')) {
-            AccountIntegration::query()
-                ->when(! $allAccounts, fn ($query) => $query->where('account_id', $accountId))
-                ->whereIn('provider', ['meta', 'meta-leads', 'facebook', 'whatsapp'])
-                ->whereNotNull('config')
-                ->get()
-                ->each(function (AccountIntegration $integration) use (&$secrets) {
-                    $this->pushSecret($secrets, $integration->secret('app_secret'));
-                    $this->pushSecret($secrets, $integration->secret('meta_app_secret'));
-                });
         }
 
         return array_values(array_unique($secrets));

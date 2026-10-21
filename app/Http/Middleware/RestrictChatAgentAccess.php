@@ -16,7 +16,6 @@ class RestrictChatAgentAccess
         'app.dashboard',
         'app.whatsapp.conversations',
         'app.whatsapp.inbox',
-        'app.ai',
         'app.accounts.switch',
         'app.notifications',
     ];
@@ -35,7 +34,6 @@ class RestrictChatAgentAccess
         'app.settings' => 'settings',
         'app.workspaces' => 'settings',
         'app.team' => 'team',
-        'app.ai' => 'inbox',
         'app.notifications' => 'inbox',
     ];
 

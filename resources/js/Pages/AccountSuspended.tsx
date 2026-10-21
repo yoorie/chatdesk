@@ -16,7 +16,13 @@ export default function AccountSuspended({
         description={`The workspace ${account.name} has been disabled. Contact support if you believe this is an error.`}
         icon={AlertCircle}
         accent="amber"
-        actions={[{ label: 'Home', href: typeof route !== 'undefined' ? route('landing') : '/', primary: true }]}
+        actions={[
+          {
+            label: 'Home',
+            href: typeof route !== 'undefined' ? route('landing') : '/',
+            primary: true,
+          },
+        ]}
       >
         {account.disabled_reason && (
           <p className="error-detail">

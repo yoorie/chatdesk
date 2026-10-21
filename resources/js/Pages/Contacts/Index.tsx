@@ -682,9 +682,7 @@ export default function ContactsIndex({
                 </div>
                 <div>
                   <div className="mb-2 flex items-center justify-between">
-                    <p className="font-medium text-ui-text dark:text-ui-dark-text">
-                      Segments
-                    </p>
+                    <p className="font-medium text-ui-text dark:text-ui-dark-text">Segments</p>
                     <Link
                       href={route('app.contacts.segments.index')}
                       className="text-xs font-semibold text-ui-green-dark dark:text-emerald-300"
@@ -775,25 +773,19 @@ export default function ContactsIndex({
                           <p className="font-bold text-ui-text dark:text-ui-dark-text">
                             {formatNumber(batch.processed_rows)}/{formatNumber(batch.total_rows)}
                           </p>
-                          <p className="text-ui-text-muted dark:text-ui-dark-text-muted">
-                            Done
-                          </p>
+                          <p className="text-ui-text-muted dark:text-ui-dark-text-muted">Done</p>
                         </div>
                         <div className="rounded-md bg-gray-50 p-2 dark:bg-ui-dark-surface">
                           <p className="font-bold text-ui-text dark:text-ui-dark-text">
                             {formatNumber(batch.imported_count)}
                           </p>
-                          <p className="text-ui-text-muted dark:text-ui-dark-text-muted">
-                            New
-                          </p>
+                          <p className="text-ui-text-muted dark:text-ui-dark-text-muted">New</p>
                         </div>
                         <div className="rounded-md bg-gray-50 p-2 dark:bg-ui-dark-surface">
                           <p className="font-bold text-ui-text dark:text-ui-dark-text">
                             {formatNumber(batch.updated_count)}
                           </p>
-                          <p className="text-ui-text-muted dark:text-ui-dark-text-muted">
-                            Updated
-                          </p>
+                          <p className="text-ui-text-muted dark:text-ui-dark-text-muted">Updated</p>
                         </div>
                         <div className="rounded-md bg-gray-50 p-2 dark:bg-ui-dark-surface">
                           <p
@@ -801,9 +793,7 @@ export default function ContactsIndex({
                           >
                             {formatNumber(batch.error_count)}
                           </p>
-                          <p className="text-ui-text-muted dark:text-ui-dark-text-muted">
-                            Skipped
-                          </p>
+                          <p className="text-ui-text-muted dark:text-ui-dark-text-muted">Skipped</p>
                         </div>
                       </div>
                       {batch.errors?.length > 0 && (
@@ -1522,17 +1512,13 @@ export default function ContactsIndex({
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-card bg-gray-50 p-3 dark:bg-ui-dark-surface-2">
-                  <p className="text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
-                    Email
-                  </p>
+                  <p className="text-xs text-ui-text-muted dark:text-ui-dark-text-muted">Email</p>
                   <p className="text-sm text-ui-text dark:text-ui-dark-text">
                     {activeContact.email || 'Not set'}
                   </p>
                 </div>
                 <div className="rounded-card bg-gray-50 p-3 dark:bg-ui-dark-surface-2">
-                  <p className="text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
-                    Company
-                  </p>
+                  <p className="text-xs text-ui-text-muted dark:text-ui-dark-text-muted">Company</p>
                   <p className="text-sm text-ui-text dark:text-ui-dark-text">
                     {activeContact.company || 'Not set'}
                   </p>
@@ -1546,9 +1532,7 @@ export default function ContactsIndex({
                   </p>
                 </div>
                 <div className="rounded-card bg-gray-50 p-3 dark:bg-ui-dark-surface-2">
-                  <p className="text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
-                    Status
-                  </p>
+                  <p className="text-xs text-ui-text-muted dark:text-ui-dark-text-muted">Status</p>
                   <Badge variant={statusConfig(activeContact.status).variant}>
                     {statusConfig(activeContact.status).label}
                   </Badge>

@@ -18,12 +18,11 @@ class SelectedContactsCampaignTest extends TestCase
         parent::setUp();
 
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
     }
 
     public function test_campaign_form_preselects_contacts_from_contacts_bulk_action(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $this->actingAsAccountOwner($account);
         $picked = WhatsAppContact::factory()->count(2)->create(['account_id' => $account->id]);
         WhatsAppContact::factory()->create(['account_id' => $account->id]);
@@ -43,7 +42,7 @@ class SelectedContactsCampaignTest extends TestCase
     {
         Queue::fake();
 
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $this->actingAsAccountOwner($account);
         $connection = WhatsAppConnection::factory()->create(['account_id' => $account->id]);
         $picked = WhatsAppContact::factory()->count(2)->create(['account_id' => $account->id]);
@@ -73,7 +72,7 @@ class SelectedContactsCampaignTest extends TestCase
 
     public function test_selected_contacts_from_another_workspace_are_rejected(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $this->actingAsAccountOwner($account);
         $connection = WhatsAppConnection::factory()->create(['account_id' => $account->id]);
         WhatsAppContact::factory()->count(2)->create(['account_id' => $account->id]);

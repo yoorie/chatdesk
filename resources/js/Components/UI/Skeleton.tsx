@@ -1,4 +1,4 @@
-export function Skeleton({ className = '' }: { className?: string }) {
+function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`ui-skeleton ${className}`} />;
 }
 
@@ -15,16 +15,6 @@ export function ConversationSkeleton() {
           <Skeleton className="h-3 w-full" />
           <Skeleton className="h-3 w-2/3" />
         </div>
-      </div>
-    </div>
-  );
-}
-
-export function MessageSkeleton() {
-  return (
-    <div className="flex justify-start mb-4">
-      <div className="max-w-xs lg:max-w-md">
-        <Skeleton className="h-16 w-full rounded-lg" />
       </div>
     </div>
   );

@@ -36,9 +36,6 @@ class ApplyPlatformSettings
         // Apply storage configuration
         $settingsService->applyStorageConfig();
 
-        // Apply payment configuration
-        $settingsService->applyPaymentConfig();
-
         // Apply performance configuration
         $settingsService->applyPerformanceConfig();
 
@@ -47,9 +44,6 @@ class ApplyPlatformSettings
 
         // Apply query logging configuration
         $settingsService->applyQueryLogging();
-
-        // Apply AI configuration
-        $settingsService->applyAIConfig();
 
         return $next($request);
     }

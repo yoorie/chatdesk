@@ -1,6 +1,5 @@
 import { useConfirm } from './useConfirm';
 import { useToast } from './useToast';
-export { useToast } from './useToast';
 
 /**
  * Combined notifications hook

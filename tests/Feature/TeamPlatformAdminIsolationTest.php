@@ -16,12 +16,11 @@ class TeamPlatformAdminIsolationTest extends TestCase
         parent::setUp();
 
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
     }
 
     public function test_workspace_team_page_hides_platform_admin_memberships(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $owner = $this->actingAsAccountOwner($account);
         $agent = User::factory()->create(['is_platform_admin' => false]);
         $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
@@ -51,7 +50,7 @@ class TeamPlatformAdminIsolationTest extends TestCase
 
     public function test_workspace_assignment_agents_exclude_platform_admins(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $agent = User::factory()->create(['is_platform_admin' => false]);
         $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
 

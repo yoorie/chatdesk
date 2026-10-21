@@ -2,8 +2,6 @@
 
 namespace App\Modules\Broadcasts\Services;
 
-use App\Core\Billing\PlanResolver;
-use App\Core\Billing\UsageService;
 use App\Models\PlatformSetting;
 use App\Modules\Broadcasts\Models\Campaign;
 use App\Modules\Broadcasts\Models\CampaignMessage;
@@ -14,6 +12,7 @@ use App\Modules\WhatsApp\Models\WhatsAppContact;
 use App\Modules\WhatsApp\Services\TemplateComposer;
 use App\Modules\WhatsApp\Services\WhatsAppClient;
 use App\Services\OperationalAlertService;
+use App\Services\UsageService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -25,7 +24,6 @@ class CampaignService
     public function __construct(
         protected WhatsAppClient $whatsappClient,
         protected TemplateComposer $templateComposer,
-        protected PlanResolver $planResolver,
         protected UsageService $usageService,
         protected OperationalAlertService $alertService
     ) {}
@@ -1021,24 +1019,6 @@ class CampaignService
         $pendingCount = (int) $campaign->recipients()->where('status', 'pending')->count();
         if ($pendingCount <= 0) {
             $errors[] = 'No pending recipients to send.';
-        }
-
-        $account = $campaign->account;
-        if ($account) {
-            $limits = $this->planResolver->getEffectiveLimits($account);
-            $usage = $this->usageService->getCurrentUsage($account);
-
-            $messageLimit = (int) ($limits['messages_monthly'] ?? 0);
-            if ($messageLimit !== -1 && ($usage->messages_sent + $pendingCount) > $messageLimit) {
-                $errors[] = "Message quota exceeded for this campaign (required {$pendingCount}, remaining ".max(0, $messageLimit - (int) $usage->messages_sent).').';
-            }
-
-            if ($campaign->type === 'template') {
-                $templateLimit = (int) ($limits['template_sends_monthly'] ?? 0);
-                if ($templateLimit !== -1 && ($usage->template_sends + $pendingCount) > $templateLimit) {
-                    $errors[] = "Template send quota exceeded (required {$pendingCount}, remaining ".max(0, $templateLimit - (int) $usage->template_sends).').';
-                }
-            }
         }
 
         return [

@@ -8,15 +8,7 @@ import { useConfirm } from '@/hooks/useConfirm';
 import { useToast } from '@/hooks/useToast';
 import AppShell from '@/Layouts/AppShell';
 import { usePage, Head, router, useForm } from '@inertiajs/react';
-import {
-  Edit,
-  Eye,
-  List,
-  Plus,
-  ToggleLeft,
-  ToggleRight,
-  Trash2,
-} from 'lucide-react';
+import { Edit, Eye, List, Plus, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 interface ListItem {

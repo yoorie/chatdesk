@@ -3,7 +3,6 @@
 namespace Tests\Feature\WhatsApp;
 
 use App\Models\Account;
-use App\Models\Plan;
 use App\Models\User;
 use App\Modules\Contacts\Models\ContactTag;
 use App\Modules\WhatsApp\Events\Inbox\ConversationUpdated;
@@ -37,18 +36,12 @@ class RealtimeTest extends TestCase
         parent::setUp();
 
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
         $this->user = User::factory()->create();
         $this->nonMember = User::factory()->create();
         $this->account = Account::factory()->create([
             'owner_id' => $this->user->id,
         ]);
         $this->account->users()->attach($this->user->id, ['role' => 'member']);
-        app(\App\Core\Billing\SubscriptionService::class)->changePlan(
-            $this->account,
-            Plan::where('key', 'self-hosted')->firstOrFail(),
-            $this->user
-        );
 
         $this->connection = WhatsAppConnection::factory()->create([
             'account_id' => $this->account->id,

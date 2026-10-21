@@ -21,7 +21,6 @@ class PublicApiTest extends TestCase
         parent::setUp();
 
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
     }
 
     protected function enablePublicApi(): void
@@ -104,29 +103,6 @@ class PublicApiTest extends TestCase
             ->assertJsonPath('message', 'API key does not include the required scope.');
     }
 
-    public function test_public_whatsapp_send_requires_active_subscription(): void
-    {
-        $this->enablePublicApi();
-
-        $account = Account::factory()->create();
-        $connection = WhatsAppConnection::factory()->create([
-            'account_id' => $account->id,
-        ]);
-
-        $response = $this->postJson('/api/v1/whatsapp/messages/text', [
-            'account_id' => $account->id,
-            'connection_id' => $connection->id,
-            'to' => '919999999999',
-            'message' => 'Hello',
-        ], [
-            'Authorization' => 'Bearer wacp_test_key',
-        ]);
-
-        $response->assertStatus(402);
-        $this->assertDatabaseCount('whatsapp_contacts', 0);
-        $this->assertDatabaseCount('whatsapp_conversations', 0);
-    }
-
     public function test_public_whatsapp_send_tracks_usage(): void
     {
         $this->enablePublicApi();
@@ -138,7 +114,7 @@ class PublicApiTest extends TestCase
             ]),
         ]);
 
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $connection = WhatsAppConnection::factory()->create([
             'account_id' => $account->id,
         ]);
@@ -169,7 +145,7 @@ class PublicApiTest extends TestCase
                 ->push(['messages' => [['id' => 'wamid.list']]]),
         ]);
 
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $connection = WhatsAppConnection::factory()->create([
             'account_id' => $account->id,
         ]);

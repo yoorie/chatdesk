@@ -42,7 +42,6 @@ import {
   Send,
   ShoppingBag,
   Smile,
-  Sparkles,
   Star,
   StickyNote,
   Trash2,
@@ -70,14 +69,10 @@ import {
   getConversationLabels,
   INBOX_LABELS,
   inboxDebug,
-  isIncomingActionableCall,
-  isIncomingVisibleCall,
   isOptimisticMatch,
   isRecordedVoiceFile,
   isRenderableMessageUpdate,
   isSameProviderMessage,
-  isUsableAiSuggestion,
-  mergeCallRecords,
   mergeLastInboundAt,
   messageReplyMetaId,
   messageReplyPreview,
@@ -100,13 +95,10 @@ import {
 } from './inbox/timeline';
 import {
   type Agent,
-  type AiAgentOption,
   type CatalogProductOption,
   type ChatMessage,
   type ContactGallery,
   type Conversation,
-  type InboxCallingSettings,
-  type InboxCallRecord,
   type InteractiveMode,
   type LocationMapState,
   type LocationSearchResult,
@@ -159,10 +151,7 @@ export default function ConversationsIndex({
   saved_buttons: savedButtons = [],
   saved_lists: savedLists = [],
   saved_forms: savedForms = [],
-  ai_agents: aiAgents = [],
   filters: initialFilters = { search: '' },
-  ai_available: aiAvailable = false,
-  recent_calls: recentCalls = [],
   selected_conversation_id: selectedConversationId = null,
   initial_thread: initialThread = null,
   new_chat_open: newChatOpen = false,
@@ -180,16 +169,12 @@ export default function ConversationsIndex({
   saved_buttons?: SavedButtonOption[];
   saved_lists?: SavedListOption[];
   saved_forms?: SavedFormOption[];
-  ai_agents?: AiAgentOption[];
   filters?: {
     search?: string;
     assignee?: string;
     status?: string;
     connection_id?: string | number;
   };
-  ai_available?: boolean;
-  whatsapp_calling?: InboxCallingSettings;
-  recent_calls?: InboxCallRecord[];
   selected_conversation_id?: number | null;
   initial_thread?: InitialThread | null;
   new_chat_open?: boolean;
@@ -202,15 +187,9 @@ export default function ConversationsIndex({
   const canDeleteChats = Boolean(workspace_permissions?.['chats.delete']);
   const notifyAssignmentEnabled = auth?.user?.notify_assignment_enabled ?? true;
   const soundEnabled = auth?.user?.notify_sound_enabled ?? true;
-  const aiSuggestionsEnabled = auth?.user?.ai_suggestions_enabled ?? false;
-  const platformAiEnabled = Boolean((usePage().props as any)?.ai?.enabled ?? false);
   const [conversations, setConversations] = useState<Conversation[]>(
     normalizeConversationList(initialConversations?.data)
   );
-  const [recentCallsState, setRecentCallsState] = useState<InboxCallRecord[]>(
-    Array.isArray(recentCalls) ? recentCalls : []
-  );
-  const [dismissedCallIds] = useState<Set<number>>(new Set());
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'denied'
   );
@@ -248,7 +227,7 @@ export default function ConversationsIndex({
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const [starredOnly, setStarredOnly] = useState(false);
   const [contactTab, setContactTab] = useState<
-    'profile' | 'media' | 'calls' | 'notes' | 'activity' | 'orders'
+    'profile' | 'media' | 'notes' | 'activity' | 'orders'
   >('profile');
   const [showNewChat, setShowNewChat] = useState(Boolean(newChatOpen));
   const [newChatForm, setNewChatForm] = useState({
@@ -274,10 +253,6 @@ export default function ConversationsIndex({
   const [replyWindowNow, setReplyWindowNow] = useState(() => Date.now());
   const [messageDraft, setMessageDraft] = useState('');
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
-  const [selectedAiAgentId, setSelectedAiAgentId] = useState<number | 'default'>(
-    aiAgents.length > 0 ? aiAgents[0].id : 'default'
-  );
-  const [aiAgentMenuOpen, setAiAgentMenuOpen] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [noteMode, setNoteMode] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -317,7 +292,6 @@ export default function ConversationsIndex({
     contact_email: '',
   });
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [aiSuggestLoading, setAiSuggestLoading] = useState(false);
   const [filePickerAccept, setFilePickerAccept] = useState<string | undefined>();
   const [locationInput, setLocationInput] = useState({ label: '', latitude: '', longitude: '' });
   const [locationMap, setLocationMap] = useState<LocationMapState>({
@@ -354,7 +328,6 @@ export default function ConversationsIndex({
   );
   const processedMessageIds = useRef<Set<string>>(new Set());
   const browserNotificationIds = useRef<Set<string>>(new Set());
-  const browserCallNotificationIds = useRef<Set<string>>(new Set());
   const assignmentStateRef = useRef<Map<number, number | null>>(
     new Map(
       normalizeConversationList(initialConversations?.data).map((c) => [
@@ -388,7 +361,6 @@ export default function ConversationsIndex({
     setShowTemplates(false);
     setShowQuickReplies(false);
     setShowInteractiveComposer(false);
-    setAiAgentMenuOpen(false);
   }, []);
 
   useEffect(() => {
@@ -398,8 +370,7 @@ export default function ConversationsIndex({
       showLocationPicker ||
       showTemplates ||
       showQuickReplies ||
-      showInteractiveComposer ||
-      aiAgentMenuOpen;
+      showInteractiveComposer;
 
     if (!hasOpenPopover) return;
 
@@ -415,7 +386,6 @@ export default function ConversationsIndex({
     document.addEventListener('pointerdown', handlePointerDown);
     return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, [
-    aiAgentMenuOpen,
     closeComposerPopovers,
     showAttachments,
     showEmoji,
@@ -432,8 +402,7 @@ export default function ConversationsIndex({
       showLocationPicker ||
       showTemplates ||
       showQuickReplies ||
-      showInteractiveComposer ||
-      aiAgentMenuOpen;
+      showInteractiveComposer;
 
     if (!hasOpenPopover) return;
 
@@ -446,7 +415,6 @@ export default function ConversationsIndex({
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [
-    aiAgentMenuOpen,
     closeComposerPopovers,
     showAttachments,
     showEmoji,
@@ -486,31 +454,6 @@ export default function ConversationsIndex({
     }
   }, [soundEnabled]);
 
-  const playCallRing = useCallback(() => {
-    if (!soundEnabled) return;
-    try {
-      const AudioContextRef = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextRef) return;
-      const context = new AudioContextRef();
-      const gain = context.createGain();
-      gain.gain.value = 0.045;
-      gain.connect(context.destination);
-
-      [0, 0.18, 0.42].forEach((offset, index) => {
-        const oscillator = context.createOscillator();
-        oscillator.type = 'sine';
-        oscillator.frequency.value = index === 1 ? 720 : 560;
-        oscillator.connect(gain);
-        oscillator.start(context.currentTime + offset);
-        oscillator.stop(context.currentTime + offset + 0.14);
-      });
-    } catch (error) {
-      if (inboxDebug) {
-        console.warn('[Calls] Unable to play ringtone', error);
-      }
-    }
-  }, [soundEnabled]);
-
   const requestBrowserNotifications = useCallback(async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) {
       addToast({
@@ -533,7 +476,7 @@ export default function ConversationsIndex({
           : 'Browser notifications blocked',
       description:
         permission === 'granted'
-          ? 'Incoming messages and calls will show browser alerts and play sound.'
+          ? 'Incoming messages will show browser alerts and play sound.'
           : 'Enable notifications from browser site settings to receive call alerts.',
       variant: permission === 'granted' ? 'success' : 'warning',
     });
@@ -607,30 +550,6 @@ export default function ConversationsIndex({
       }
     },
     [addToast, notificationPermission, playNotificationSound, showBrowserNotification]
-  );
-
-  const notifyIncomingCall = useCallback(
-    (call: InboxCallRecord, conversation?: Conversation | null) => {
-      const id = `call-${call.id}-${call.status}`;
-      if (browserCallNotificationIds.current.has(id)) return;
-      browserCallNotificationIds.current.add(id);
-      if (browserCallNotificationIds.current.size > 50) {
-        const ids = Array.from(browserCallNotificationIds.current);
-        browserCallNotificationIds.current = new Set(ids.slice(-25));
-      }
-
-      const caller =
-        conversation?.contact.name || call.contact_name || call.phone_number || 'WhatsApp caller';
-      addToast({
-        title: 'Incoming WhatsApp call',
-        description: String(caller),
-        variant: 'info',
-        duration: 6000,
-      });
-      playCallRing();
-      showBrowserNotification(id, 'Incoming WhatsApp call', String(caller), conversation?.id);
-    },
-    [addToast, playCallRing, showBrowserNotification]
   );
 
   const parseMessageDate = (value: string | null) => {
@@ -754,12 +673,6 @@ export default function ConversationsIndex({
             activeConversationId: activeId,
           });
         });
-        const updatedCalls = Array.isArray(response.data?.updated_calls)
-          ? response.data.updated_calls
-          : [];
-        if (updatedCalls.length) {
-          setRecentCallsState((prev) => mergeCallRecords(prev, updatedCalls));
-        }
         const serverTime = new Date(response.data?.server_time || new Date()).getTime();
         lastPollRef.current = new Date(
           (Number.isFinite(serverTime) ? serverTime : Date.now()) - 10000
@@ -776,10 +689,6 @@ export default function ConversationsIndex({
   useEffect(() => {
     setConversations(normalizeConversationList(initialConversations?.data));
   }, [initialConversations]);
-
-  useEffect(() => {
-    setRecentCallsState(Array.isArray(recentCalls) ? recentCalls : []);
-  }, [recentCalls]);
 
   // Backend search: debounce and reload with search param
   const lastSearchRef = useRef(initialFilters?.search ?? '');
@@ -973,57 +882,6 @@ export default function ConversationsIndex({
     activeTimelineMessages.filter((message) =>
       ['image', 'video', 'document', 'audio', 'sticker'].includes(message.type)
     ).length;
-  const incomingCall = useMemo(
-    () =>
-      recentCallsState.find(
-        (call) => isIncomingVisibleCall(call) && !dismissedCallIds.has(Number(call.id))
-      ) ?? null,
-    [recentCallsState, dismissedCallIds]
-  );
-  const incomingCallConversation = useMemo(() => {
-    if (!incomingCall) return null;
-    const callPhone = String(incomingCall.phone_number || '').replace(/\D+/g, '');
-
-    return (
-      conversations.find((conversation) => {
-        const contactPhone = String(conversation.contact.wa_id || '').replace(/\D+/g, '');
-
-        return (
-          callPhone === contactPhone &&
-          (!incomingCall.whatsapp_connection_id ||
-            incomingCall.whatsapp_connection_id === conversation.connection.id)
-        );
-      }) ?? null
-    );
-  }, [conversations, incomingCall]);
-
-  useEffect(() => {
-    if (!incomingCall || !isIncomingActionableCall(incomingCall)) return;
-    notifyIncomingCall(incomingCall, incomingCallConversation);
-
-    const interval = window.setInterval(() => {
-      const current = recentCallsState.find((call) => Number(call.id) === Number(incomingCall.id));
-      if (
-        !current ||
-        !isIncomingActionableCall(current) ||
-        dismissedCallIds.has(Number(incomingCall.id))
-      ) {
-        window.clearInterval(interval);
-        return;
-      }
-      playCallRing();
-    }, 3500);
-
-    return () => window.clearInterval(interval);
-  }, [
-    incomingCall,
-    incomingCallConversation,
-    notifyIncomingCall,
-    playCallRing,
-    recentCallsState,
-    dismissedCallIds,
-  ]);
-
   const activeReplyWindow = customerServiceWindowFor(
     activeConversation,
     activeTimelineMessages,
@@ -1034,11 +892,6 @@ export default function ConversationsIndex({
   const lastOutboundAt =
     [...activeTimelineMessages].reverse().find((message) => message.direction === 'outbound')
       ?.created_at ?? null;
-  const selectedAiAgent =
-    selectedAiAgentId === 'default'
-      ? null
-      : (aiAgents.find((agent) => agent.id === selectedAiAgentId) ?? null);
-  const selectedAiAgentLabel = selectedAiAgent?.name ?? 'Default assistant';
   const pickedLocation = useMemo(() => {
     const latitude = Number(locationInput.latitude);
     const longitude = Number(locationInput.longitude);
@@ -1662,8 +1515,6 @@ export default function ConversationsIndex({
     );
   };
 
-  const canUseAiSuggest = Boolean(aiAvailable && aiSuggestionsEnabled && platformAiEnabled);
-
   const saveInteractiveButton = async () => {
     const label = newInteractiveButtonLabel.trim();
     if (!label || savingInteractiveButton) return;
@@ -2006,61 +1857,6 @@ export default function ConversationsIndex({
     setReplyTo(null);
     setSendingMessage(false);
     fetchConversationMessages(activeConversation.id, true);
-  };
-
-  const handleAiSuggest = () => {
-    if (!activeConversation || aiSuggestLoading) return;
-
-    if (!canUseAiSuggest) {
-      addToast({
-        title: 'AI suggestion unavailable',
-        description: !aiSuggestionsEnabled
-          ? 'Enable AI suggestions in AI settings.'
-          : !platformAiEnabled
-            ? 'AI is disabled in platform settings.'
-            : 'AI is not available on this plan.',
-        variant: 'warning',
-      });
-      return;
-    }
-
-    setAiSuggestLoading(true);
-    axios
-      .post(
-        route('app.whatsapp.conversations.ai-suggest', { conversation: activeConversation.id }),
-        {
-          agent_id: selectedAiAgentId === 'default' ? null : selectedAiAgentId,
-        }
-      )
-      .then((response) => {
-        const suggestion = response.data?.suggestion;
-        if (!isUsableAiSuggestion(suggestion)) {
-          addToast({
-            title: 'AI suggestion incomplete',
-            description:
-              'The draft was too short or ended mid-thought, so it was not inserted. Try regenerate.',
-            variant: 'warning',
-          });
-          return;
-        }
-
-        const normalized = suggestion.trim();
-        setMessageDraft(normalized);
-        const agentName = response.data?.agent?.name;
-        addToast({
-          title: 'AI suggestion added',
-          description: agentName ? `${agentName} drafted this reply.` : 'Review before sending.',
-          variant: 'info',
-        });
-      })
-      .catch((error) => {
-        addToast({
-          title: 'AI suggestion failed',
-          description: error?.response?.data?.error || error?.message || 'Please try again.',
-          variant: 'error',
-        });
-      })
-      .finally(() => setAiSuggestLoading(false));
   };
 
   const selectLocation = (latitude: number, longitude: number, label?: string) => {
@@ -2814,19 +2610,9 @@ export default function ConversationsIndex({
       }
     );
 
-    const unsubscribeCallUpdated = subscribe(channel, '.whatsapp.call.updated', (data: any) => {
-      const call = data?.call as InboxCallRecord | undefined;
-      if (!call?.id) return;
-      setRecentCallsState((prev) => mergeCallRecords(prev, [call]));
-      if (isIncomingActionableCall(call)) {
-        fetchInboxStreamAndMerge();
-      }
-    });
-
     return () => {
       unsubscribeConversationUpdated();
       unsubscribeMessageCreated();
-      unsubscribeCallUpdated();
     };
   }, [
     account?.id,
@@ -4055,93 +3841,6 @@ export default function ConversationsIndex({
                       <Lock className="mr-1 inline h-3 w-3" />
                       {noteMode ? 'Note mode' : 'Add note'}
                     </button>
-                    {canUseAiSuggest && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={handleAiSuggest}
-                          disabled={aiSuggestLoading}
-                          className="flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-purple-600 transition hover:bg-purple-50 disabled:opacity-60 dark:text-purple-300 dark:hover:bg-purple-500/10"
-                        >
-                          {aiSuggestLoading ? (
-                            <span className="h-3 w-3 animate-spin rounded-full border-2 border-purple-300 border-t-transparent" />
-                          ) : (
-                            <Sparkles className="h-3 w-3" />
-                          )}
-                          {aiSuggestLoading
-                            ? 'Thinking'
-                            : messageDraft.trim()
-                              ? 'Regenerate'
-                              : 'AI suggest'}
-                        </button>
-                        {aiAgents.length > 0 && (
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={() => setAiAgentMenuOpen((open) => !open)}
-                              className="flex h-6 max-w-[180px] items-center gap-1.5 rounded-md border border-purple-100 bg-purple-50 px-2 text-[11px] font-medium text-purple-700 transition hover:border-purple-200 hover:bg-purple-100 dark:border-purple-500/20 dark:bg-purple-500/10 dark:text-purple-200 dark:hover:bg-purple-500/15"
-                              aria-haspopup="listbox"
-                              aria-expanded={aiAgentMenuOpen}
-                            >
-                              <Sparkles className="h-3 w-3 flex-shrink-0" />
-                              <span className="min-w-0 truncate">{selectedAiAgentLabel}</span>
-                              <ChevronDown className="h-3 w-3 flex-shrink-0" />
-                            </button>
-                            {aiAgentMenuOpen && (
-                              <div className="absolute bottom-full left-0 z-50 mb-2 w-[min(320px,calc(100vw-2rem))] overflow-hidden rounded-lg border border-purple-100 bg-white shadow-pop dark:border-purple-500/20 dark:bg-slate-900">
-                                <div className="border-b border-gray-100 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-ui-text-muted dark:border-ui-dark-border dark:text-ui-dark-text-muted">
-                                  AI agent
-                                </div>
-                                <div className="max-h-64 overflow-y-auto p-1">
-                                  {[
-                                    {
-                                      id: 'default' as const,
-                                      name: 'Default assistant',
-                                      role: 'Platform AI',
-                                      tone: 'fallback',
-                                      avatar: null,
-                                    },
-                                    ...aiAgents,
-                                  ].map((agent) => {
-                                    const isSelected = selectedAiAgentId === agent.id;
-                                    return (
-                                      <button
-                                        key={agent.id}
-                                        type="button"
-                                        onClick={() => {
-                                          setSelectedAiAgentId(agent.id);
-                                          setAiAgentMenuOpen(false);
-                                        }}
-                                        className={`flex w-full items-start gap-2 rounded-md px-2 py-2 text-left transition ${isSelected ? 'bg-purple-50 text-purple-800 dark:bg-purple-500/10 dark:text-purple-200' : 'text-ui-text hover:bg-gray-50 dark:text-ui-dark-text dark:hover:bg-slate-800'}`}
-                                        role="option"
-                                        aria-selected={isSelected}
-                                      >
-                                        <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-purple-100 text-xs font-semibold text-purple-700 dark:bg-purple-500/15 dark:text-purple-200">
-                                          {agent.avatar ||
-                                            (agent.name || 'AI').charAt(0).toUpperCase()}
-                                        </span>
-                                        <span className="min-w-0 flex-1">
-                                          <span className="block truncate text-xs font-semibold">
-                                            {agent.name}
-                                          </span>
-                                          <span className="mt-0.5 block truncate text-[10px] capitalize text-ui-text-muted dark:text-ui-dark-text-muted">
-                                            {[agent.role, agent.tone].filter(Boolean).join(' · ') ||
-                                              'Assistant'}
-                                          </span>
-                                        </span>
-                                        {isSelected && (
-                                          <Check className="mt-1 h-3.5 w-3.5 flex-shrink-0" />
-                                        )}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </>
-                    )}
                   </div>
                   {attachments.length > 0 && (
                     <div

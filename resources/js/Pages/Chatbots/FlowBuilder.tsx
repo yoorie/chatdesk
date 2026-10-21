@@ -4,7 +4,6 @@ import { ThemedIconTile } from '@/Components/UI/Elements';
 import { cn } from '@/lib/utils';
 import {
   Bot,
-  CalendarPlus,
   ClipboardList,
   Clock,
   GitBranch,
@@ -152,22 +151,6 @@ const nodeTypesMeta = [
     description: 'Mark for human follow-up',
   },
   {
-    type: 'create_deal',
-    label: 'Create deal',
-    category: 'CRM',
-    icon: Workflow,
-    tone: 'green' as const,
-    description: 'Open a sales opportunity',
-  },
-  {
-    type: 'create_appointment',
-    label: 'Appointment',
-    category: 'CRM',
-    icon: CalendarPlus,
-    tone: 'green' as const,
-    description: 'Create a demo or service appointment',
-  },
-  {
     type: 'condition',
     label: 'Condition',
     category: 'Logic',
@@ -242,14 +225,6 @@ function describeNode(node: NodeItem) {
 
   if (config.action_type === 'handoff') {
     return config.reason || 'Human handoff';
-  }
-
-  if (config.action_type === 'create_deal') {
-    return config.title || 'Create deal';
-  }
-
-  if (config.action_type === 'create_appointment') {
-    return config.title || 'Create appointment';
   }
 
   return String(config.action_type || 'action').replace(/_/g, ' ');

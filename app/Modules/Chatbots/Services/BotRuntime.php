@@ -23,8 +23,6 @@ class BotRuntime
         'add_tag',
         'add_segment',
         'update_contact',
-        'create_deal',
-        'create_appointment',
         'set_status',
         'set_priority',
         'handoff',

@@ -259,9 +259,7 @@ export default function WhatsAppFlowsIndex({
             </select>
           </label>
           <label className="block space-y-1.5">
-            <span className="text-xs font-semibold text-ui-text dark:text-ui-dark-text">
-              Name
-            </span>
+            <span className="text-xs font-semibold text-ui-text dark:text-ui-dark-text">Name</span>
             <TextInput
               value={form.data.name}
               onChange={(event) => form.setData('name', event.target.value)}

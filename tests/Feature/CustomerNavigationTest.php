@@ -14,12 +14,11 @@ class CustomerNavigationTest extends TestCase
         parent::setUp();
 
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
     }
 
     public function test_short_urls_redirect_to_the_right_pages(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $this->actingAsAccountOwner($account);
 
         $this->get('/inbox')->assertRedirect('/app/conversations');
@@ -30,7 +29,7 @@ class CustomerNavigationTest extends TestCase
 
     public function test_dashboard_shares_a_setup_checklist(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $this->actingAsAccountOwner($account);
 
         $this->get(route('app.dashboard'))

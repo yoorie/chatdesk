@@ -2,8 +2,6 @@
 
 namespace App\Modules\WhatsApp\Http\Controllers;
 
-use App\Core\Billing\EntitlementService;
-use App\Core\Billing\UsageService;
 use App\Http\Controllers\Controller;
 use App\Modules\WhatsApp\Events\Inbox\ConversationUpdated;
 use App\Modules\WhatsApp\Events\Inbox\MessageCreated;
@@ -15,6 +13,7 @@ use App\Modules\WhatsApp\Models\WhatsAppTemplate;
 use App\Modules\WhatsApp\Models\WhatsAppTemplateSend;
 use App\Modules\WhatsApp\Services\TemplateComposer;
 use App\Modules\WhatsApp\Services\WhatsAppClient;
+use App\Services\UsageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -23,7 +22,6 @@ class TemplateSendController extends Controller
     public function __construct(
         protected TemplateComposer $composer,
         protected WhatsAppClient $whatsappClient,
-        protected EntitlementService $entitlementService,
         protected UsageService $usageService
     ) {}
 
@@ -86,8 +84,6 @@ class TemplateSendController extends Controller
         }
 
         // Check limits before sending
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
-        $this->entitlementService->assertWithinLimit($account, 'template_sends_monthly', 1);
 
         try {
             DB::beginTransaction();

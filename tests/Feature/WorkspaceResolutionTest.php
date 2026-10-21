@@ -15,12 +15,11 @@ class WorkspaceResolutionTest extends TestCase
         parent::setUp();
 
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
     }
 
     public function test_owner_without_session_workspace_is_not_sent_to_onboarding(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $owner = User::findOrFail($account->owner_id);
 
         $this->actingAs($owner)
@@ -31,9 +30,9 @@ class WorkspaceResolutionTest extends TestCase
 
     public function test_stale_session_workspace_falls_back_to_users_workspace(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $owner = User::findOrFail($account->owner_id);
-        $otherAccount = $this->createAccountWithPlan('self-hosted');
+        $otherAccount = $this->createAccount();
 
         // Deleted workspace id and a workspace the user has no access to.
         foreach ([999999, $otherAccount->id] as $staleId) {
@@ -47,9 +46,9 @@ class WorkspaceResolutionTest extends TestCase
 
     public function test_member_workspace_is_restored_and_active_workspace_preferred(): void
     {
-        $suspended = $this->createAccountWithPlan('self-hosted');
+        $suspended = $this->createAccount();
         $suspended->update(['status' => 'suspended']);
-        $active = $this->createAccountWithPlan('self-hosted');
+        $active = $this->createAccount();
         $member = User::factory()->create();
         $suspended->users()->attach($member->id, ['role' => 'admin']);
         $active->users()->attach($member->id, ['role' => 'admin']);

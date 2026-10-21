@@ -17,7 +17,6 @@ class SingleOrganisationRegistrationTest extends TestCase
     {
         parent::setUp();
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
     }
 
     public function test_first_user_becomes_admin_and_creates_the_organisation(): void
@@ -56,7 +55,7 @@ class SingleOrganisationRegistrationTest extends TestCase
 
     public function test_invited_agent_can_join_the_organisation(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $invitation = AccountInvitation::create([
             'account_id' => $account->id,
             'invited_by' => $account->owner_id,

@@ -316,31 +316,6 @@ class MetaGraphService
         return $data;
     }
 
-    public function enablePhoneNumberCalling(string $phoneNumberId, string $accessToken, array $options = []): array
-    {
-        $calling = array_filter([
-            'status' => 'ENABLED',
-            'call_icon_visibility' => $options['call_icon_visibility'] ?? 'DEFAULT',
-            'callback_permission_status' => ($options['callback_permission_status'] ?? true) ? 'ENABLED' : null,
-        ], fn ($value) => $value !== null);
-
-        $response = Http::withToken($accessToken)
-            ->post("{$this->baseUrl}/{$this->apiVersion}/{$phoneNumberId}/settings", [
-                'calling' => $calling,
-            ]);
-
-        $data = $response->json();
-        if (! $response->successful()) {
-            Log::channel('whatsapp')->warning('Enable phone number calling failed', [
-                'phone_number_id' => $phoneNumberId,
-                'status' => $response->status(),
-                'error' => $data['error'] ?? $data]);
-            throw new \RuntimeException($data['error']['message'] ?? 'Enable phone number calling failed');
-        }
-
-        return $data ?: ['success' => true, 'calling' => $calling];
-    }
-
     public function requestPhoneNumberCode(string $phoneNumberId, string $accessToken, string $codeMethod = 'SMS', string $language = 'en'): array
     {
         $response = Http::withToken($accessToken)

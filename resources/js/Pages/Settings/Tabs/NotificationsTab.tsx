@@ -214,9 +214,7 @@ export default function NotificationsTab() {
         {data.quiet_hours_enabled && (
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <label className="space-y-1.5">
-              <span className="text-xs font-medium text-ui-text dark:text-ui-dark-text">
-                Start
-              </span>
+              <span className="text-xs font-medium text-ui-text dark:text-ui-dark-text">Start</span>
               <input
                 type="time"
                 value={data.quiet_hours_start}
@@ -225,9 +223,7 @@ export default function NotificationsTab() {
               />
             </label>
             <label className="space-y-1.5">
-              <span className="text-xs font-medium text-ui-text dark:text-ui-dark-text">
-                End
-              </span>
+              <span className="text-xs font-medium text-ui-text dark:text-ui-dark-text">End</span>
               <input
                 type="time"
                 value={data.quiet_hours_end}

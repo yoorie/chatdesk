@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Core\Billing\UsageService;
 use App\Core\Modules\ModuleRegistry;
 use App\Models\AccountUser;
 use App\Modules\Broadcasts\Models\Campaign;
@@ -12,6 +11,7 @@ use App\Modules\WhatsApp\Models\WhatsAppContact;
 use App\Modules\WhatsApp\Models\WhatsAppConversation;
 use App\Modules\WhatsApp\Models\WhatsAppMessage;
 use App\Modules\WhatsApp\Models\WhatsAppTemplate;
+use App\Services\UsageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;

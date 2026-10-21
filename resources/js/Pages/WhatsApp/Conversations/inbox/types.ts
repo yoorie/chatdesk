@@ -5,15 +5,6 @@ export interface Agent {
   role?: string;
 }
 
-export interface AiAgentOption {
-  id: number;
-  name: string;
-  avatar?: string | null;
-  role?: string;
-  tone?: string;
-  mode?: 'suggest' | 'approval' | 'autopilot';
-}
-
 export interface Conversation {
   id: number;
   account_id?: number | string;
@@ -50,9 +41,6 @@ export interface Conversation {
     id: number;
     name: string;
     slug?: string;
-    calling_status?: string | null;
-    calling_enabled?: boolean;
-    calling_webhook_subscribed?: boolean;
   };
   assigned_to?: number | null;
   priority?: string | null;
@@ -122,36 +110,6 @@ export interface ConversationAuditEvent {
     name: string;
     email?: string;
   } | null;
-}
-
-export interface InboxCallRecord {
-  id: number;
-  whatsapp_connection_id?: number | null;
-  direction: string;
-  phone_number?: string | null;
-  contact_name?: string | null;
-  status: string;
-  route_mode?: string | null;
-  routed_to?: string | null;
-  provider_call_id?: string | null;
-  duration_seconds?: number;
-  summary?: string | null;
-  metadata?: Record<string, any> | null;
-  agent?: { id: number; name: string } | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-}
-
-export interface InboxCallingSettings {
-  enabled: boolean;
-  routing_mode?: string;
-  whatsapp_connection_id?: number | string | null;
-  calling_eligibility_status?: string | null;
-  calling_webhook_subscribed?: boolean;
-  default_agent_id?: number | null;
-  outbound_enabled?: boolean;
-  transfer_number?: string | null;
-  setup_url?: string;
 }
 
 export interface TemplateOption {

@@ -18,12 +18,11 @@ class GlobalSearchTest extends TestCase
         parent::setUp();
 
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
     }
 
     public function test_global_search_returns_workspace_results(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $this->actingAsAccountOwner($account);
 
         WhatsAppContact::create([
@@ -74,8 +73,8 @@ class GlobalSearchTest extends TestCase
 
     public function test_global_search_does_not_leak_other_workspace_data(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
-        $other = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
+        $other = $this->createAccount();
         $this->actingAsAccountOwner($account);
 
         WhatsAppContact::create([

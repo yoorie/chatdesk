@@ -15,10 +15,7 @@ export function LearnMore({
 }) {
   return (
     <details
-      className={cn(
-        'group text-xs text-ui-text-muted dark:text-ui-dark-text-muted',
-        className
-      )}
+      className={cn('group text-xs text-ui-text-muted dark:text-ui-dark-text-muted', className)}
     >
       <summary className="inline-flex cursor-pointer list-none items-center gap-1 font-medium text-ui-green-dark hover:underline dark:text-emerald-300 [&::-webkit-details-marker]:hidden">
         {label}
@@ -30,5 +27,3 @@ export function LearnMore({
     </details>
   );
 }
-
-export default LearnMore;

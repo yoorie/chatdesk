@@ -59,8 +59,10 @@ export default function Guest({
             </header>
 
             <div className="flex-1 flex items-center justify-center px-6 sm:px-10 py-8">
-              <div className="w-full max-w-md">{children}
-<DemoBanner /></div>
+              <div className="w-full max-w-md">
+                {children}
+                <DemoBanner />
+              </div>
             </div>
           </div>
 
@@ -70,7 +72,9 @@ export default function Guest({
                 {brandName()} workspace
               </p>
               <h2 className="mt-4 text-3xl font-bold leading-tight">
-                One workspace.<br />Every conversation.
+                One workspace.
+                <br />
+                Every conversation.
               </h2>
               <p className="mt-4 text-sm leading-6 text-white/65">
                 Your team, customers, and automations, connected on WhatsApp.

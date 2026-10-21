@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\AccountApiKey;
 use App\Models\AccountApiRequestLog;
-use App\Models\AccountAppointment;
 use App\Models\AccountWebhookDelivery;
 use App\Models\AccountWebhookEndpoint;
 use App\Models\QuickReply;
@@ -50,7 +49,7 @@ class DemoInboxSeeder extends Seeder
 
         DB::transaction(function () use ($owner, $agent) {
             $account = $owner->ownedAccounts()->first()
-                ?? app(AccountProvisioner::class)->create($owner, 'Harbour & Co.', null, [
+                ?? app(AccountProvisioner::class)->create($owner, 'Harbour & Co.', [
                     'workspace_type' => 'business',
                     'industry' => 'Retail',
                     'timezone' => config('app.timezone', 'UTC'),
@@ -554,22 +553,6 @@ class DemoInboxSeeder extends Seeder
                 'respect_opt_out' => true,
                 'started_at' => now()->subDays(3),
                 'completed_at' => now()->subDays(3)->addHour(),
-            ]
-        );
-
-        AccountAppointment::updateOrCreate(
-            ['account_id' => $account->id, 'external_id' => 'demo-fitting'],
-            [
-                'external_source' => 'demo',
-                'title' => 'Showroom fitting',
-                'contact_name' => 'Sneha Kapoor',
-                'contact_phone' => '+1 555 010 0003',
-                'scheduled_at' => now()->addDays(2)->setTime(15, 0),
-                'duration_minutes' => 30,
-                'staff_name' => 'Rohan Iyer',
-                'status' => 'scheduled',
-                'type' => 'in_person',
-                'location' => 'Harbour & Co. showroom',
             ]
         );
 

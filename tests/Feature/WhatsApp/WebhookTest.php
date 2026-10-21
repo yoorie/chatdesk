@@ -3,7 +3,6 @@
 namespace Tests\Feature\WhatsApp;
 
 use App\Models\Account;
-use App\Models\AccountMetaLead;
 use App\Models\AccountUsage;
 use App\Models\PlatformSetting;
 use App\Modules\WhatsApp\Models\WhatsAppConnection;
@@ -325,19 +324,6 @@ class WebhookTest extends TestCase
         $this->assertSame('238500000001', $message->payload['ctwa']['source_id'] ?? null);
         $this->assertSame('ChatDesk Business Plan', $contact->metadata['ctwa']['latest']['headline'] ?? null);
         $this->assertSame('clid_test_123', $conversation->metadata['ctwa']['latest']['ctwa_clid'] ?? null);
-
-        $lead = AccountMetaLead::where('account_id', $this->account->id)
-            ->where('external_id', 'clid_test_123')
-            ->firstOrFail();
-        $this->assertSame('ctwa', $lead->source_type);
-        $this->assertSame('Click-to-WhatsApp Ad', $lead->form_name);
-        $this->assertSame($conversation->id, $lead->payload['conversation_id'] ?? null);
-
-        $this->assertDatabaseHas('whatsapp_conversation_audit_events', [
-            'account_id' => $this->account->id,
-            'whatsapp_conversation_id' => $conversation->id,
-            'event_type' => 'ctwa_attribution',
-        ]);
     }
 
     public function test_webhook_receive_rejects_invalid_meta_signature_when_app_secret_is_configured(): void
@@ -682,44 +668,6 @@ class WebhookTest extends TestCase
         }
 
         $this->assertSame('read', $message->fresh()->status);
-    }
-
-    public function test_workspace_integration_secret_cannot_sign_webhooks_for_another_workspace(): void
-    {
-        PlatformSetting::set('whatsapp.meta_app_secret', 'platform-secret', 'string', 'whatsapp');
-        $attacker = Account::factory()->create();
-        \App\Models\AccountIntegration::create([
-            'account_id' => $attacker->id,
-            'provider' => 'meta',
-            'status' => 'connected',
-            'config' => ['app_secret' => 'attacker-secret'],
-        ]);
-
-        $this->connection->update(['phone_number_id' => 'victim-phone', 'is_active' => true]);
-        $body = json_encode([
-            'entry' => [[
-                'changes' => [[
-                    'field' => 'messages',
-                    'value' => [
-                        'metadata' => ['phone_number_id' => 'victim-phone'],
-                        'messages' => [[
-                            'id' => 'wamid.forged',
-                            'from' => '1234567890',
-                            'type' => 'text',
-                            'text' => ['body' => 'forged'],
-                        ]],
-                    ],
-                ]],
-            ]],
-        ]);
-
-        $this->call('POST', route('webhooks.whatsapp.central.receive'), [], [], [], [
-            'CONTENT_TYPE' => 'application/json',
-            'HTTP_ACCEPT' => 'application/json',
-            'HTTP_X_HUB_SIGNATURE_256' => 'sha256='.hash_hmac('sha256', $body, 'attacker-secret'),
-        ], $body)->assertUnauthorized();
-
-        $this->assertDatabaseMissing('whatsapp_messages', ['meta_message_id' => 'wamid.forged']);
     }
 
     public function test_malformed_webhook_payload_does_not_crash(): void

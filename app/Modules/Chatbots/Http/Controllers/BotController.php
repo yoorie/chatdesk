@@ -5,7 +5,6 @@ namespace App\Modules\Chatbots\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBotRequest;
 use App\Http\Requests\UpdateBotRequest;
-use App\Models\AiAgent;
 use App\Modules\Chatbots\Models\Bot;
 use App\Modules\Chatbots\Models\BotActionJob;
 use App\Modules\Chatbots\Models\BotEdge;
@@ -23,7 +22,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -104,7 +102,6 @@ class BotController extends Controller
                 ->get(['id', 'name']),
             'automationOptions' => [
                 'agents' => $account->getAssignableAgents(),
-                'ai_agents' => $this->aiAgentsForAccount($account),
                 'tags' => ContactTag::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'color']),
                 'segments' => ContactSegment::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'contact_count']),
                 'templates' => WhatsAppTemplate::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'language', 'status']),
@@ -162,7 +159,6 @@ class BotController extends Controller
                 ->get(['id', 'name']),
             'automationOptions' => [
                 'agents' => $account->getAssignableAgents(),
-                'ai_agents' => $this->aiAgentsForAccount($account),
                 'tags' => ContactTag::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'color']),
                 'segments' => ContactSegment::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'contact_count']),
                 'templates' => WhatsAppTemplate::where('account_id', $account->id)->orderBy('name')->get(['id', 'name', 'language', 'status']),
@@ -681,26 +677,6 @@ class BotController extends Controller
         };
     }
 
-    protected function aiAgentsForAccount($account): array
-    {
-        if (! $account || ! Schema::hasTable('ai_agents')) {
-            return [];
-        }
-
-        return AiAgent::where('account_id', $account->id)
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'role', 'mode'])
-            ->map(fn (AiAgent $agent) => [
-                'id' => $agent->id,
-                'name' => $agent->name,
-                'role' => $agent->role,
-                'mode' => $agent->mode,
-            ])
-            ->values()
-            ->all();
-    }
-
     protected function simulateActionDetail(array $config): string
     {
         return match ($config['action_type'] ?? 'send_text') {
@@ -709,7 +685,6 @@ class BotController extends Controller
             'send_media' => 'Send '.($config['media_type'] ?? 'media').': '.($config['media_url'] ?? 'missing URL'),
             'handoff' => 'Mark human handoff. Reason: '.($config['reason'] ?? 'handoff'),
             'add_tag' => 'Add tag: '.($config['tag_name'] ?? $config['tag_id'] ?? 'tag'),
-            'create_deal' => 'Create deal: '.($config['title'] ?? 'WhatsApp lead'),
             'assign_agent' => 'Assign human agent #'.($config['agent_id'] ?? 'not set'),
             default => str_replace('_', ' ', (string) ($config['action_type'] ?? 'action')),
         };

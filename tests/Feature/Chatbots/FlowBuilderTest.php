@@ -24,7 +24,6 @@ class FlowBuilderTest extends TestCase
         parent::setUp();
 
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
     }
 
     public function test_short_keyword_does_not_match_inside_another_word(): void
@@ -73,7 +72,7 @@ class FlowBuilderTest extends TestCase
 
     public function test_owner_can_build_and_save_a_flow_graph_from_builder_endpoints(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $owner = $this->actingAsAccountOwner($account);
 
         $this->post(route('app.chatbots.store'), [

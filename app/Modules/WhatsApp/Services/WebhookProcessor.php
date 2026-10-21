@@ -2,17 +2,10 @@
 
 namespace App\Modules\WhatsApp\Services;
 
-use App\Core\Billing\UsageService;
 use App\Models\Account;
-use App\Models\AccountMetaLead;
-use App\Models\AccountModule;
 use App\Models\PlatformSetting;
-use App\Models\WhatsAppCall;
-use App\Models\WhatsAppCallConsent;
-use App\Models\WhatsAppCallVoiceSession;
 use App\Modules\Chatbots\Jobs\ProcessInboundMessageForBots;
 use App\Modules\WhatsApp\Events\Inbox\AuditEventAdded;
-use App\Modules\WhatsApp\Events\Inbox\CallUpdated;
 use App\Modules\WhatsApp\Events\Inbox\ConversationUpdated;
 use App\Modules\WhatsApp\Events\Inbox\MessageCreated;
 use App\Modules\WhatsApp\Events\Inbox\MessageUpdated;
@@ -21,10 +14,10 @@ use App\Modules\WhatsApp\Models\WhatsAppConnection;
 use App\Modules\WhatsApp\Models\WhatsAppContact;
 use App\Modules\WhatsApp\Models\WhatsAppConversation;
 use App\Modules\WhatsApp\Models\WhatsAppConversationAuditEvent;
-use App\Modules\WhatsApp\Models\WhatsAppConversationNote;
 use App\Modules\WhatsApp\Models\WhatsAppMessage;
 use App\Modules\WhatsApp\Models\WhatsAppMetaEventLog;
 use App\Modules\WhatsApp\Models\WhatsAppTemplate;
+use App\Services\UsageService;
 use App\Services\WorkspaceWebhookDispatcher;
 use App\Support\SchemaCache;
 use Illuminate\Support\Facades\Cache;
@@ -90,7 +83,6 @@ class WebhookProcessor
 
             $messagesProcessed = 0;
             $statusesProcessed = 0;
-            $callsProcessed = 0;
 
             foreach ((array) $entries as $entryIndex => $entry) {
                 $changes = is_array($entry) && is_array($entry['changes'] ?? null) ? $entry['changes'] : [];
@@ -101,7 +93,6 @@ class WebhookProcessor
                     $value = is_array($change['value'] ?? null) ? $change['value'] : [];
                     $messages = array_filter((array) ($value['messages'] ?? []), 'is_array');
                     $statuses = array_filter((array) ($value['statuses'] ?? []), 'is_array');
-                    $calls = array_filter((array) ($value['calls'] ?? []), 'is_array');
                     $field = $change['field'] ?? null;
 
                     $this->recordMetaEvent($connection, $field, $value);
@@ -133,13 +124,7 @@ class WebhookProcessor
                         'field' => $field,
                         'messages_count' => count($messages),
                         'statuses_count' => count($statuses),
-                        'calls_count' => count($calls),
                     ]);
-
-                    foreach ($calls as $callData) {
-                        $this->processCall($callData, $value, $connection);
-                        $callsProcessed++;
-                    }
 
                     foreach ($messages as $messageData) {
                         $this->processMessage($messageData, $value, $connection, $correlationId);
@@ -151,7 +136,7 @@ class WebhookProcessor
                         $statusesProcessed++;
                     }
 
-                    if (empty($messages) && empty($statuses) && empty($calls) && $field !== 'messages') {
+                    if (empty($messages) && empty($statuses) && $field !== 'messages') {
                         $this->processGenericMetaEvent($field, $value, $connection);
                     }
                 }
@@ -168,8 +153,7 @@ class WebhookProcessor
                 'correlation_id' => $correlationId,
                 'connection_id' => $connection->id,
                 'messages_count' => $messagesProcessed,
-                'statuses_count' => $statusesProcessed,
-                'calls_count' => $callsProcessed]);
+                'statuses_count' => $statusesProcessed]);
         } catch (\Throwable $e) {
             DB::rollBack();
 
@@ -215,404 +199,6 @@ class WebhookProcessor
         return str_contains($message, 'Deadlock found')
             || str_contains($message, 'Serialization failure')
             || str_contains($message, 'Lock wait timeout exceeded');
-    }
-
-    protected function processCall(array $callData, array $value, WhatsAppConnection $connection): void
-    {
-        if (! SchemaCache::hasTable('ai_voice_calls')) {
-            return;
-        }
-
-        $module = AccountModule::where('account_id', $connection->account_id)
-            ->whereIn('module_key', ['whatsapp.calling', 'ai.voice'])
-            ->first();
-
-        $settings = array_merge([
-            'enabled' => false,
-            'default_agent_id' => null,
-            'routing_mode' => 'ai_first',
-            'outbound_requires_consent' => false,
-            'transfer_number' => null,
-        ], $module?->config ?? []);
-
-        if (! ($settings['enabled'] ?? false)) {
-            Log::channel('whatsapp')->info('WhatsApp call event ignored: module disabled', [
-                'connection_id' => $connection->id,
-                'call_id' => $callData['id'] ?? null,
-            ]);
-
-            return;
-        }
-
-        $callId = $callData['id'] ?? $callData['call_id'] ?? $callData['wamid'] ?? null;
-        $from = $callData['from'] ?? $callData['caller'] ?? $callData['phone_number'] ?? $callData['customer'] ?? null;
-        $direction = $this->normalizeCallDirection((string) ($callData['direction'] ?? $callData['call_direction'] ?? 'inbound'));
-        $status = $this->normalizeCallStatus((string) ($callData['status'] ?? $callData['event'] ?? $callData['call_status'] ?? 'received'));
-        $route = $this->resolveCallRoute($settings, $direction);
-        $consentStatus = $this->resolveCallConsent($connection, $from, $direction, (bool) ($settings['outbound_requires_consent'] ?? false));
-
-        $payload = [
-            'account_id' => $connection->account_id,
-            'whatsapp_connection_id' => $connection->id,
-            'ai_agent_id' => $route['agent_id'],
-            'direction' => $direction,
-            'phone_number' => $from,
-            'contact_name' => $value['contacts'][0]['profile']['name'] ?? null,
-            'provider' => 'whatsapp',
-            'provider_call_id' => $callId,
-            'status' => $status,
-            'route_mode' => $route['mode'],
-            'routed_to' => $route['target'],
-            'consent_status' => $consentStatus,
-            'started_at' => $this->parseCallTimestamp($callData['started_at'] ?? $callData['start_time'] ?? null),
-            'ended_at' => $this->parseCallTimestamp($callData['ended_at'] ?? $callData['end_time'] ?? null),
-            'duration_seconds' => (int) ($callData['duration_seconds'] ?? $callData['duration'] ?? 0),
-            'transcript' => $callData['transcript'] ?? null,
-            'summary' => $callData['summary'] ?? null,
-            'metadata' => [
-                'call' => $callData,
-                'value_metadata' => $value['metadata'] ?? [],
-            ],
-        ];
-
-        if ($callId) {
-            $call = WhatsAppCall::where('account_id', $connection->account_id)
-                ->where('provider', 'whatsapp')
-                ->where('provider_call_id', $callId)
-                ->first();
-
-            if ($call) {
-                if (! isset($callData['direction'], $callData['call_direction'])) {
-                    $payload['direction'] = $call->direction;
-                }
-                if (($call->metadata['voice_bridge'] ?? null) === 'browser_webrtc') {
-                    $payload['ai_agent_id'] = $call->ai_agent_id;
-                    $payload['route_mode'] = $call->route_mode;
-                    $payload['routed_to'] = $call->routed_to;
-                }
-                $existingMetadata = $call->metadata ?? [];
-                $callEvents = array_values(array_merge($existingMetadata['call_events'] ?? [], [[
-                    'at' => now()->toIso8601String(),
-                    'event' => $callData,
-                ]]));
-                $payload['metadata'] = array_merge($existingMetadata, $payload['metadata'], [
-                    'call_events' => array_slice($callEvents, -20),
-                    'last_webhook_at' => now()->toIso8601String(),
-                ]);
-                if ($sdp = $this->extractCallSdp($callData)) {
-                    $payload['metadata']['latest_sdp'] = $sdp;
-                    $payload['metadata']['first_sdp'] = $existingMetadata['first_sdp'] ?? $sdp;
-                }
-                $call->forceFill($payload)->save();
-            } else {
-                $payload['metadata']['call_events'] = [[
-                    'at' => now()->toIso8601String(),
-                    'event' => $callData,
-                ]];
-                if ($sdp = $this->extractCallSdp($callData)) {
-                    $payload['metadata']['latest_sdp'] = $sdp;
-                    $payload['metadata']['first_sdp'] = $sdp;
-                }
-                $call = WhatsAppCall::create($payload);
-            }
-
-            $this->syncVoiceSessionFromCallWebhook($call, $callData);
-
-            $this->attachCallToInbox($call, $connection, $value, $route);
-
-            return;
-        }
-
-        $call = WhatsAppCall::create($payload);
-        $this->syncVoiceSessionFromCallWebhook($call, $callData);
-        $this->attachCallToInbox($call, $connection, $value, $route);
-    }
-
-    protected function syncVoiceSessionFromCallWebhook(WhatsAppCall $call, array $callData): void
-    {
-        if (! SchemaCache::hasTable('whatsapp_call_voice_sessions')) {
-            return;
-        }
-
-        $sdp = $this->extractCallSdp($callData) ?? ($call->metadata['first_sdp'] ?? $call->metadata['latest_sdp'] ?? null);
-
-        $session = WhatsAppCallVoiceSession::where('whatsapp_call_id', $call->id)
-            ->latest()
-            ->first();
-
-        if (! $session) {
-            if (
-                $call->direction === 'inbound'
-                && $call->routed_to === 'ai_agent'
-                && $call->ai_agent_id
-                && (bool) PlatformSetting::get('ai.voice_enabled', false)
-                && is_string($sdp)
-                && trim($sdp) !== ''
-                && ! in_array($call->status, ['completed', 'failed', 'rejected', 'missed'], true)
-            ) {
-                WhatsAppCallVoiceSession::create([
-                    'account_id' => $call->account_id,
-                    'whatsapp_call_id' => $call->id,
-                    'whatsapp_connection_id' => $call->whatsapp_connection_id,
-                    'ai_agent_id' => $call->ai_agent_id,
-                    'direction' => 'inbound',
-                    'status' => 'queued',
-                    'remote_sdp' => $sdp,
-                    'metadata' => [
-                        'source' => 'inbound_call_webhook',
-                        'last_call_webhook' => $callData,
-                        'last_call_webhook_at' => now()->toIso8601String(),
-                    ],
-                ]);
-            }
-
-            return;
-        }
-
-        $metadata = array_merge($session->metadata ?? [], [
-            'last_call_webhook' => $callData,
-            'last_call_webhook_at' => now()->toIso8601String(),
-        ]);
-        $updates = [
-            'metadata' => $metadata,
-        ];
-        if (is_string($sdp) && trim($sdp) !== '') {
-            $updates['remote_sdp'] = $sdp;
-            if ($session->direction === 'outbound') {
-                $updates['status'] = 'connected';
-                $updates['connected_at'] = $session->connected_at ?: now();
-            }
-        }
-
-        if (in_array($call->status, ['completed', 'failed', 'rejected', 'missed'], true)) {
-            $updates['status'] = $call->status === 'completed' ? 'completed' : 'failed';
-            $updates['ended_at'] = now();
-        }
-
-        $session->forceFill($updates)->save();
-    }
-
-    protected function extractCallSdp(array $payload): ?string
-    {
-        $direct = $payload['session']['sdp']
-            ?? $payload['connect']['session']['sdp']
-            ?? $payload['sdp']
-            ?? null;
-
-        if (is_string($direct) && $this->looksLikeSdp($direct)) {
-            return $direct;
-        }
-
-        $queue = [$payload];
-        while ($queue) {
-            $current = array_shift($queue);
-            if (! is_array($current)) {
-                continue;
-            }
-
-            foreach ($current as $key => $value) {
-                if (is_string($value) && str_contains(strtolower((string) $key), 'sdp') && $this->looksLikeSdp($value)) {
-                    return $value;
-                }
-
-                if (is_array($value)) {
-                    $queue[] = $value;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    protected function looksLikeSdp(string $value): bool
-    {
-        $trimmed = trim($value);
-
-        return str_starts_with($trimmed, 'v=0') && str_contains($trimmed, 'm=audio');
-    }
-
-    protected function attachCallToInbox(WhatsAppCall $call, WhatsAppConnection $connection, array $value, array $route): void
-    {
-        $waId = preg_replace('/\D+/', '', (string) $call->phone_number);
-        if ($waId === '') {
-            return;
-        }
-
-        $contactName = $call->contact_name ?: ($value['contacts'][0]['profile']['name'] ?? null);
-        $contact = WhatsAppContact::withTrashed()->firstOrNew([
-            'account_id' => $connection->account_id,
-            'wa_id' => $waId,
-        ]);
-
-        $contact->fill([
-            'name' => $contactName ?: ($contact->name ?: $waId),
-            'phone' => $contact->phone ?: $waId,
-            'status' => $contact->status ?: 'active',
-            'source' => $contact->source ?: 'whatsapp_call',
-        ]);
-        $contact->save();
-
-        if (method_exists($contact, 'restore') && $contact->trashed()) {
-            $contact->restore();
-        }
-
-        $agentName = null;
-        if ($call->ai_agent_id && SchemaCache::hasTable('ai_agents')) {
-            $agentName = \App\Models\AiAgent::where('account_id', $connection->account_id)
-                ->where('id', $call->ai_agent_id)
-                ->value('name');
-        }
-
-        $routeLabel = $agentName
-            ? "AI agent: {$agentName}"
-            : (($route['target'] ?? null) && ($route['target'] ?? null) !== 'unassigned' ? (string) $route['target'] : 'not routed');
-        $preview = trim(sprintf(
-            '%s WhatsApp call %s, routed to %s',
-            ucfirst($call->direction ?: 'Inbound'),
-            str_replace('_', ' ', $call->status ?: 'received'),
-            $routeLabel
-        ));
-
-        $conversation = WhatsAppConversation::firstOrCreate(
-            [
-                'account_id' => $connection->account_id,
-                'whatsapp_connection_id' => $connection->id,
-                'whatsapp_contact_id' => $contact->id,
-            ],
-            [
-                'status' => 'open',
-                'last_message_at' => now(),
-                'last_message_preview' => $preview,
-            ]
-        );
-
-        $conversation->forceFill([
-            'status' => $conversation->status === 'closed' ? 'open' : $conversation->status,
-            'last_message_at' => now(),
-            'last_message_preview' => $preview,
-        ])->save();
-
-        $noteText = trim(sprintf(
-            "WhatsApp call %s.\nStatus: %s\nRoute: %s",
-            $call->direction ?: 'inbound',
-            str_replace('_', ' ', $call->status ?: 'received'),
-            $routeLabel
-        ));
-
-        $existingNote = WhatsAppConversationNote::where('account_id', $connection->account_id)
-            ->where('whatsapp_conversation_id', $conversation->id)
-            ->where('note', 'like', '%Call ID: '.($call->provider_call_id ?: $call->id).'%')
-            ->first();
-
-        if (! $existingNote) {
-            WhatsAppConversationNote::create([
-                'account_id' => $connection->account_id,
-                'whatsapp_conversation_id' => $conversation->id,
-                'created_by' => null,
-                'note' => $noteText."\nCall ID: ".($call->provider_call_id ?: $call->id),
-            ]);
-        }
-
-        WhatsAppConversationAuditEvent::create([
-            'account_id' => $connection->account_id,
-            'whatsapp_conversation_id' => $conversation->id,
-            'actor_id' => null,
-            'event_type' => 'whatsapp_call',
-            'description' => $preview,
-            'meta' => [
-                'call_id' => $call->id,
-                'provider_call_id' => $call->provider_call_id,
-                'route_mode' => $call->route_mode,
-                'routed_to' => $call->routed_to,
-                'ai_agent_id' => $call->ai_agent_id,
-            ],
-        ]);
-
-        $this->broadcastSafely(new ConversationUpdated($conversation));
-        event(new CallUpdated($call->fresh('agent:id,name') ?? $call));
-    }
-
-    protected function resolveCallRoute(array $settings, string $direction): array
-    {
-        $mode = $settings['routing_mode'] ?? 'ai_first';
-        $agentId = $settings['default_agent_id'] ?? null;
-
-        if ($mode === 'human_only') {
-            return ['mode' => $mode, 'target' => $settings['transfer_number'] ?? 'human', 'agent_id' => null];
-        }
-
-        if ($mode === 'human_first') {
-            return ['mode' => $mode, 'target' => $settings['transfer_number'] ?? 'human', 'agent_id' => null];
-        }
-
-        return ['mode' => $mode, 'target' => $agentId ? 'ai_agent' : 'unassigned', 'agent_id' => $agentId];
-    }
-
-    protected function normalizeCallDirection(string $direction): string
-    {
-        $normalized = strtolower($direction);
-
-        return match ($normalized) {
-            'business_initiated', 'business-initiated', 'outgoing' => 'outbound',
-            default => 'inbound',
-        };
-    }
-
-    protected function normalizeCallStatus(string $status): string
-    {
-        $normalized = strtolower($status);
-
-        return match ($normalized) {
-            'connect', 'connected', 'accepted', 'answer', 'answered' => 'answered',
-            'terminate', 'terminated', 'complete', 'completed' => 'completed',
-            'reject', 'rejected', 'declined' => 'rejected',
-            'missed', 'no_answer' => 'missed',
-            default => $normalized ?: 'received',
-        };
-    }
-
-    protected function parseCallTimestamp(mixed $value): ?\Illuminate\Support\Carbon
-    {
-        if (! $value) {
-            return null;
-        }
-
-        if (is_numeric($value)) {
-            return now()->createFromTimestamp((int) $value);
-        }
-
-        try {
-            return \Illuminate\Support\Carbon::parse((string) $value);
-        } catch (\Throwable) {
-            return null;
-        }
-    }
-
-    protected function resolveCallConsent(WhatsAppConnection $connection, ?string $phoneNumber, string $direction, bool $requiresConsent): string
-    {
-        if ($direction !== 'outbound') {
-            return 'not_required';
-        }
-
-        if (! $requiresConsent) {
-            return 'not_required';
-        }
-
-        if (! $phoneNumber || ! SchemaCache::hasTable('ai_voice_consents')) {
-            return 'missing';
-        }
-
-        $consent = WhatsAppCallConsent::where('account_id', $connection->account_id)
-            ->where('phone_number', $phoneNumber)
-            ->where('status', 'granted')
-            ->where(function ($query) {
-                $query->whereNull('expires_at')
-                    ->orWhere('expires_at', '>', now());
-            })
-            ->latest('consented_at')
-            ->first();
-
-        return $consent ? 'granted' : 'missing';
     }
 
     /**
@@ -797,10 +383,6 @@ class WebhookProcessor
 
             // Auto-assign if enabled and conversation is unassigned
             $this->autoAssignConversation($conversation, $connection);
-
-            if ($ctwa) {
-                $this->recordCtwaLead($connection, $contact, $conversation, $message, $ctwa);
-            }
 
             // Load relationships for broadcast
             $message->load('conversation.contact');
@@ -1106,82 +688,6 @@ class WebhookProcessor
             'first' => $existing['first'] ?? $ctwa,
             'history' => array_slice($history, -10),
         ];
-    }
-
-    protected function recordCtwaLead(
-        WhatsAppConnection $connection,
-        WhatsAppContact $contact,
-        WhatsAppConversation $conversation,
-        WhatsAppMessage $message,
-        array $ctwa
-    ): void {
-        if (! SchemaCache::hasTable('account_meta_leads')) {
-            return;
-        }
-
-        $externalId = $ctwa['ctwa_clid']
-            ?: ($ctwa['source_id'] ? 'ctwa:'.$ctwa['source_id'].':'.$contact->wa_id : 'ctwa:message:'.$message->meta_message_id);
-
-        $lead = AccountMetaLead::firstOrNew([
-            'account_id' => $connection->account_id,
-            'external_id' => $externalId,
-        ]);
-
-        $lead->fill([
-            'name' => $contact->name ?: $contact->wa_id,
-            'phone' => $contact->phone ?: $contact->wa_id,
-            'stage' => $lead->stage ?: 'new',
-            'platform' => $lead->platform ?: 'Facebook',
-            'source_type' => 'ctwa',
-            'form_name' => 'Click-to-WhatsApp Ad',
-            'ad_name' => $ctwa['headline'] ?: $lead->ad_name,
-            'captured_at' => $lead->captured_at ?: now(),
-            'payload' => array_merge(is_array($lead->payload) ? $lead->payload : [], [
-                'ctwa' => $ctwa,
-                'contact_id' => $contact->id,
-                'conversation_id' => $conversation->id,
-                'message_id' => $message->id,
-                'connection_id' => $connection->id,
-            ]),
-        ]);
-        $lead->save();
-
-        $audit = WhatsAppConversationAuditEvent::create([
-            'account_id' => $connection->account_id,
-            'whatsapp_conversation_id' => $conversation->id,
-            'actor_id' => null,
-            'event_type' => 'ctwa_attribution',
-            'description' => 'Click-to-WhatsApp ad attribution captured',
-            'meta' => [
-                'lead_id' => $lead->id,
-                'source_id' => $ctwa['source_id'] ?? null,
-                'ctwa_clid' => $ctwa['ctwa_clid'] ?? null,
-                'headline' => $ctwa['headline'] ?? null,
-            ],
-        ]);
-
-        event(new AuditEventAdded($conversation, [
-            'id' => $audit->id,
-            'event_type' => $audit->event_type,
-            'description' => $audit->description,
-            'meta' => $audit->meta,
-            'created_at' => $audit->created_at->toIso8601String(),
-        ]));
-
-        app(\App\Services\AppNotificationService::class)->workspace(
-            $connection->account_id,
-            'ctwa_lead_created',
-            'New Click-to-WhatsApp lead',
-            ($contact->name ?: $contact->wa_id).' started a chat from a Meta ad.',
-            'info',
-            route('app.whatsapp.conversations.index', ['conversation' => $conversation->id]),
-            [
-                'conversation_id' => $conversation->id,
-                'contact_id' => $contact->id,
-                'lead_id' => $lead->id,
-                'dedupe_key' => 'ctwa_'.$connection->account_id.'_'.md5($externalId),
-            ]
-        );
     }
 
     /**

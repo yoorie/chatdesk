@@ -333,10 +333,6 @@ return new class extends Migration
             return;
         }
 
-        if (! class_exists(\Doctrine\DBAL\DriverManager::class)) {
-            throw new RuntimeException("doctrine/dbal is required to rename columns on this driver. Please install it to rename {$table}.{$from}.");
-        }
-
         Schema::table($table, function (Blueprint $table) use ($from, $to) {
             $table->renameColumn($from, $to);
         });

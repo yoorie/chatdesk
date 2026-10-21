@@ -68,19 +68,34 @@ export default function AppShell({ children, fullscreen = false }: AppShellProps
             }
           >
             {children}
-<DemoBanner />
+            <DemoBanner />
             {!fullscreen && (
               <footer className="mt-8 border-t border-gray-200 pt-4 pb-2 text-center text-xs text-ui-text-muted dark:border-ui-dark-border dark:text-ui-dark-text-muted">
                 ChatDesk open-source edition &middot; Built by{' '}
-                <a href="https://yoorie.com" target="_blank" rel="noreferrer" className="font-medium underline">
+                <a
+                  href="https://yoorie.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium underline"
+                >
                   Yoorie
                 </a>
                 . Want to run it as a SaaS, or need more? Get a paid plan at{' '}
-                <a href="https://chatdesk.yoorie.com" target="_blank" rel="noreferrer" className="font-medium underline">
+                <a
+                  href="https://chatdesk.yoorie.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium underline"
+                >
                   chatdesk.yoorie.com
                 </a>{' '}
                 or use{' '}
-                <a href="https://zyptos.com" target="_blank" rel="noreferrer" className="font-medium underline">
+                <a
+                  href="https://zyptos.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium underline"
+                >
                   Zyptos
                 </a>
                 , the premium version of ChatDesk.

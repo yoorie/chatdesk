@@ -2,14 +2,9 @@
 
 namespace App\Modules\WhatsApp\Http\Controllers;
 
-use App\Core\Billing\EntitlementService;
-use App\Core\Billing\PlanResolver;
-use App\Core\Billing\UsageService;
+use App\Core\Modules\ModuleAccess;
 use App\Http\Controllers\Controller;
 use App\Models\AccountCatalogProduct;
-use App\Models\AiAgent;
-use App\Models\AiSuggestionFeedback;
-use App\Models\AiUsageLog;
 use App\Models\QuickReply;
 use App\Models\User;
 use App\Modules\Contacts\Models\ContactTag;
@@ -30,7 +25,7 @@ use App\Modules\WhatsApp\Models\WhatsAppTemplate;
 use App\Modules\WhatsApp\Models\WhatsAppTemplateSend;
 use App\Modules\WhatsApp\Services\TemplateComposer;
 use App\Modules\WhatsApp\Services\WhatsAppClient;
-use App\Services\AI\ConversationAssistantService;
+use App\Services\UsageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -48,10 +43,8 @@ class ConversationController extends Controller
         protected \App\Modules\WhatsApp\Services\ConversationMediaService $mediaAttachments,
         protected WhatsAppClient $whatsappClient,
         protected TemplateComposer $templateComposer,
-        protected EntitlementService $entitlementService,
         protected UsageService $usageService,
-        protected ConversationAssistantService $conversationAssistant,
-        protected PlanResolver $planResolver
+        protected ModuleAccess $moduleAccess
     ) {}
 
     /**
@@ -200,7 +193,7 @@ class ConversationController extends Controller
 
         $agents = $account->getAssignableAgents()->all();
 
-        $effectiveModules = $this->planResolver->getEffectiveModules($account);
+        $effectiveModules = $this->moduleAccess->getEffectiveModules($account);
         $aiAvailable = in_array('ai', $effectiveModules, true);
 
         $templates = WhatsAppTemplate::where('account_id', $account->id)
@@ -237,10 +230,7 @@ class ConversationController extends Controller
             'saved_buttons' => $this->savedButtonsForInbox($account),
             'saved_lists' => $this->savedListsForInbox($account),
             'saved_forms' => $this->savedFormsForInbox($account),
-            'ai_agents' => [], // AI assistants are not part of the open-source edition.
             'ai_available' => $aiAvailable,
-            'whatsapp_calling' => $this->inboxPresentation->callingSettingsForInbox($account),
-            'recent_calls' => $this->inboxPresentation->recentCallsForInbox($account, collect($conversations->items())->pluck('contact.wa_id')->filter()->values()->all()),
             'filters' => [
                 'search' => $request->input('search', ''),
                 'assignee' => $request->input('assignee', 'all'),
@@ -946,203 +936,6 @@ class ConversationController extends Controller
     }
 
     /**
-     * Get an AI-suggested reply for the conversation (requires user preference and AI module).
-     */
-    public function aiSuggest(Request $request, WhatsAppConversation $conversation)
-    {
-        $account = $request->attributes->get('account') ?? current_account();
-
-        if (! account_ids_match($conversation->account_id, $account->id)) {
-            return response()->json(['error' => 'Conversation not found.'], 404);
-        }
-
-        if (! $request->user()?->ai_suggestions_enabled) {
-            return response()->json(['error' => 'AI suggestions are disabled in your settings.'], 403);
-        }
-
-        $effectiveModules = $this->planResolver->getEffectiveModules($account);
-        if (! in_array('ai', $effectiveModules, true)) {
-            return response()->json(['error' => 'AI module is not available on your plan.'], 403);
-        }
-
-        if (! \App\Models\PlatformSetting::get('ai.enabled', false)) {
-            return response()->json(['error' => 'AI is disabled in platform settings.'], 403);
-        }
-
-        $validated = $request->validate([
-            'agent_id' => ['nullable', 'integer'],
-        ]);
-
-        $aiAgent = null;
-        if (! empty($validated['agent_id'])) {
-            $aiAgent = AiAgent::where('account_id', $account->id)
-                ->where('is_active', true)
-                ->find($validated['agent_id']);
-
-            if (! $aiAgent) {
-                return response()->json(['error' => 'AI agent is unavailable for this workspace.'], 404);
-            }
-        }
-
-        try {
-            $suggestion = $this->conversationAssistant->suggestReply($conversation, 25, null, $aiAgent);
-            $suggestion = trim($suggestion);
-            $suggestion = $this->applySuggestionGuardrails($suggestion);
-
-            if ($suggestion === '') {
-                return response()->json(['error' => 'AI returned an empty suggestion. Please try again.'], 422);
-            }
-
-            if (! $this->isUsableSuggestion($suggestion)) {
-                return response()->json(['error' => 'AI returned an incomplete suggestion. Please regenerate.'], 422);
-            }
-
-            $user = $request->user();
-            if ($user && $account && Schema::hasTable('ai_usage_logs')) {
-                try {
-                    AiUsageLog::create([
-                        'user_id' => $user->id,
-                        'account_id' => $account->id,
-                        'feature' => 'conversation_suggest',
-                    ]);
-                } catch (\Illuminate\Database\QueryException $e) {
-                    // Usage logging should never block AI suggestions.
-                    \Illuminate\Support\Facades\Log::warning('AI usage log write failed', [
-                        'conversation_id' => $conversation->id,
-                        'user_id' => $user->id,
-                        'account_id' => $account->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-
-            return response()->json([
-                'suggestion' => $suggestion,
-                'agent' => $aiAgent ? [
-                    'id' => $aiAgent->id,
-                    'name' => $aiAgent->name,
-                    'mode' => $aiAgent->mode,
-                ] : null,
-            ]);
-        } catch (\Throwable $e) {
-            [$error, $status] = $this->mapAiSuggestionError($e);
-            \Illuminate\Support\Facades\Log::warning('AI suggestion failed', [
-                'conversation_id' => $conversation->id,
-                'account_id' => $account?->id,
-                'user_id' => $request->user()?->id,
-                'exception' => $e::class,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'error' => $error,
-            ], $status);
-        }
-    }
-
-    public function aiFeedback(Request $request, WhatsAppConversation $conversation)
-    {
-        $account = $request->attributes->get('account') ?? current_account();
-
-        if (! account_ids_match($conversation->account_id, $account->id)) {
-            return response()->json(['error' => 'Conversation not found.'], 404);
-        }
-
-        $validated = $request->validate([
-            'suggestion' => 'required|string|max:8000',
-            'verdict' => 'required|string|in:up,down',
-            'reason' => 'nullable|string|max:1000',
-        ]);
-
-        if (Schema::hasTable('ai_suggestion_feedback')) {
-            AiSuggestionFeedback::create([
-                'account_id' => $account->id,
-                'user_id' => $request->user()?->id,
-                'whatsapp_conversation_id' => $conversation->id,
-                'suggestion' => $validated['suggestion'],
-                'verdict' => $validated['verdict'],
-                'reason' => $validated['reason'] ?? null,
-                'metadata' => [
-                    'contact_id' => $conversation->whatsapp_contact_id,
-                    'connection_id' => $conversation->whatsapp_connection_id,
-                ],
-            ]);
-        }
-
-        return response()->json(['ok' => true]);
-    }
-
-    protected function mapAiSuggestionError(\Throwable $e): array
-    {
-        if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
-            return [$e->getMessage(), $e->getStatusCode()];
-        }
-
-        $message = trim((string) $e->getMessage());
-        $lower = Str::lower($message);
-
-        if (Str::contains($lower, ['api key not configured', 'unknown ai provider', 'not configured'])) {
-            return ['AI provider is not configured. Please check Platform Settings -> AI.', 422];
-        }
-
-        if (Str::contains($lower, ['invalid api key', 'incorrect api key', 'invalid_api_key', 'unauthorized', 'authentication'])) {
-            return ['AI provider authentication failed. Please verify API credentials in Platform Settings.', 422];
-        }
-
-        if (Str::contains($lower, ['timeout', 'timed out', 'curl error 28', 'connection', 'network'])) {
-            return ['AI provider timed out. Please retry in a few seconds.', 503];
-        }
-
-        if (Str::contains($lower, ['gemini', 'model']) && Str::contains($lower, ['not found', 'not supported', 'listmodels'])) {
-            return ['Selected Gemini model is unavailable for your API key/version. Set AI model to gemini-2.0-flash in Platform Settings -> AI and try again.', 422];
-        }
-
-        if ($message !== '') {
-            return ['AI suggestion failed: '.$message, 503];
-        }
-
-        return ['AI suggestion failed. Please try again.', 503];
-    }
-
-    protected function applySuggestionGuardrails(string $suggestion): string
-    {
-        $normalized = preg_replace('/\s+/', ' ', trim($suggestion)) ?? '';
-        if ($normalized === '') {
-            return '';
-        }
-
-        // Basic PII guardrails: redact long numeric strings and card-like patterns.
-        $normalized = preg_replace('/\b\d{10,19}\b/', '[REDACTED-NUMBER]', $normalized) ?? $normalized;
-        $normalized = preg_replace('/\b(?:\d[ -]*?){13,16}\b/', '[REDACTED-CARD]', $normalized) ?? $normalized;
-
-        return trim($normalized);
-    }
-
-    protected function isUsableSuggestion(string $suggestion): bool
-    {
-        $suggestion = trim($suggestion);
-
-        if (mb_strlen($suggestion) < 24) {
-            return false;
-        }
-
-        foreach ([
-            '/\bto help me understand\s*$/i',
-            '/\bplease share\s*$/i',
-            '/\bcan you share\s*$/i',
-            '/\bcould you share\s*$/i',
-            '/\bmay i know\s*$/i',
-            '/\btell me more about\s*$/i',
-        ] as $pattern) {
-            if (preg_match($pattern, $suggestion)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
      * Send a message in a conversation.
      */
     public function sendMessage(Request $request, WhatsAppConversation $conversation)
@@ -1168,7 +961,6 @@ class ConversationController extends Controller
         $this->ensureCustomerServiceWindowOpen($conversation);
 
         // Check message limit before sending
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
 
         $conversation->load(['connection', 'contact']);
         $replyContext = $this->replyContext($conversation, $validated['reply_message_id'] ?? null);
@@ -1331,8 +1123,6 @@ class ConversationController extends Controller
             ]);
         }
 
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
-
         $message->update([
             'status' => 'queued',
             'error_message' => null,
@@ -1488,8 +1278,6 @@ class ConversationController extends Controller
             })
             ->findOrFail($validated['template_id']);
 
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
-
         $conversation->load(['connection', 'contact']);
 
         try {
@@ -1593,8 +1381,6 @@ class ConversationController extends Controller
             'attachment' => 'required|file|max:102400']);
 
         $this->ensureCustomerServiceWindowOpen($conversation);
-
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
 
         $conversation->load(['connection', 'contact']);
         $replyContext = $this->replyContext($conversation, $validated['reply_message_id'] ?? null);
@@ -1885,8 +1671,6 @@ class ConversationController extends Controller
 
         $this->ensureCustomerServiceWindowOpen($conversation);
 
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
-
         $conversation->load(['connection', 'contact']);
 
         $message = WhatsAppMessage::lockForUpdate()->create([
@@ -1970,8 +1754,6 @@ class ConversationController extends Controller
         ]);
 
         $this->ensureCustomerServiceWindowOpen($conversation);
-
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
 
         $conversation->load(['connection', 'contact']);
 
@@ -2104,8 +1886,6 @@ class ConversationController extends Controller
 
         $this->ensureCustomerServiceWindowOpen($conversation);
 
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
-
         $conversation->load(['connection', 'contact']);
 
         $message = WhatsAppMessage::lockForUpdate()->create([
@@ -2191,7 +1971,6 @@ class ConversationController extends Controller
 
         $this->ensureCustomerServiceWindowOpen($conversation);
 
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
         $conversation->load(['connection', 'contact']);
 
         $message = WhatsAppMessage::lockForUpdate()->create([
@@ -2270,7 +2049,6 @@ class ConversationController extends Controller
 
         $this->ensureCustomerServiceWindowOpen($conversation);
 
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
         $conversation->load(['connection', 'contact']);
 
         $message = WhatsAppMessage::lockForUpdate()->create([
@@ -2344,7 +2122,6 @@ class ConversationController extends Controller
 
         $this->ensureCustomerServiceWindowOpen($conversation);
 
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
         $conversation->load(['connection', 'contact']);
 
         $contactCard = [
@@ -2434,7 +2211,6 @@ class ConversationController extends Controller
 
         $this->ensureCustomerServiceWindowOpen($conversation);
 
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
         $conversation->load(['connection', 'contact']);
 
         $mode = $validated['mode'] ?? 'single';

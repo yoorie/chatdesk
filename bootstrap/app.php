@@ -51,14 +51,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'account.resolve' => \App\Http\Middleware\ResolveAccount::class,
-            'module.enabled' => \App\Http\Middleware\EnsureModuleEnabled::class,
-            'super.admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'account.active' => \App\Http\Middleware\EnsureAccountActive::class,
-            'account.subscribed' => \App\Http\Middleware\EnsureAccountSubscribed::class,
             'module.entitled' => \App\Http\Middleware\EnsureModuleEntitled::class,
             'rate.limit' => \App\Http\Middleware\EnforceRateLimits::class,
-            'profile.complete' => \App\Http\Middleware\EnsureProfileComplete::class,
-            'feature.enabled' => \App\Http\Middleware\EnsureFeatureEnabled::class,
             'webhooks.enabled' => \App\Http\Middleware\EnsureWebhooksEnabled::class,
             'public-api.enabled' => \App\Http\Middleware\EnsurePublicApiEnabled::class,
             'public-api.auth' => \App\Http\Middleware\AuthenticatePublicApiKey::class,
@@ -92,18 +87,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 || (method_exists($e, 'getStatusCode') && $e->getStatusCode() === 404);
             if ($request->header('X-Inertia') && $is404) {
                 return \Inertia\Inertia::render('Error/NotFound')->toResponse($request)->setStatusCode(404);
-            }
-
-            // Plan-gated feature: explain which plan includes it and link to billing.
-            if ($e instanceof \App\Exceptions\FeatureNotOnPlanException && ! $request->expectsJson()) {
-                return \Inertia\Inertia::render('Error/Forbidden', [
-                    'reason' => 'plan',
-                    'feature' => $e->featureLabel(),
-                    'requiredPlan' => $e->requiredPlan,
-                    'billingUrl' => \Illuminate\Support\Facades\Route::has('app.billing.index')
-                        ? route('app.billing.index')
-                        : '/app/settings/billing',
-                ])->toResponse($request)->setStatusCode(403);
             }
 
             // Return Inertia 403 page for Inertia requests

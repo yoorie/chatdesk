@@ -1,4 +1,4 @@
-import { brandName } from './brand';
+import { brandName } from './brand.ts';
 
 export const DEFAULT_PLATFORM_NAME = brandName();
 

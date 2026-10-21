@@ -2,38 +2,12 @@
 
 namespace App\Modules\WhatsApp\Services;
 
-use App\Models\AccountModule;
-use App\Models\AiAgent;
-use App\Models\WhatsAppCall;
 use App\Modules\Chatbots\Models\BotFlow;
 use App\Modules\Chatbots\Models\BotNode;
 use App\Modules\WhatsApp\Models\WhatsAppConversation;
-use Illuminate\Support\Facades\Schema;
 
 class ConversationInboxService
 {
-    public function activeAiAgentsForInbox($account): array
-    {
-        if (! $account || ! Schema::hasTable('ai_agents')) {
-            return [];
-        }
-
-        return AiAgent::where('account_id', $account->id)
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'avatar', 'role', 'tone', 'mode'])
-            ->map(fn (AiAgent $agent) => [
-                'id' => $agent->id,
-                'name' => $agent->name,
-                'avatar' => $agent->avatar,
-                'role' => $agent->role,
-                'tone' => $agent->tone,
-                'mode' => $agent->mode,
-            ])
-            ->values()
-            ->all();
-    }
-
     public function automationStateForConversation(WhatsAppConversation $conversation): ?array
     {
         $metadata = is_array($conversation->metadata) ? $conversation->metadata : [];
@@ -100,79 +74,6 @@ class ConversationInboxService
         $conversation->forceFill(['metadata' => $metadata])->save();
 
         return false;
-    }
-
-    public function callingSettingsForInbox($account): array
-    {
-        $defaults = [
-            'enabled' => false,
-            'routing_mode' => 'ai_first',
-            'default_agent_id' => null,
-            'outbound_enabled' => true,
-            'outbound_requires_consent' => false,
-            'transfer_number' => null,
-            'setup_url' => null,
-        ];
-
-        // WhatsApp Calling is a ChatDesk paid plans / Zyptos feature.
-        return $defaults;
-
-        if (! $account || ! Schema::hasTable('account_modules')) {
-            return $defaults;
-        }
-
-        $module = AccountModule::where('account_id', $account->id)
-            ->whereIn('module_key', ['whatsapp.calling', 'ai.voice'])
-            ->first();
-
-        return array_merge($defaults, $module?->config ?? []);
-    }
-
-    public function recentCallsForInbox($account, array $waIds): array
-    {
-        if (! $account || ! Schema::hasTable('ai_voice_calls')) {
-            return [];
-        }
-
-        $normalizedWaIds = collect($waIds)
-            ->map(fn ($value) => preg_replace('/\D+/', '', (string) $value))
-            ->filter()
-            ->unique()
-            ->values();
-
-        if ($normalizedWaIds->isEmpty()) {
-            return [];
-        }
-
-        return WhatsAppCall::with('agent:id,name')
-            ->where('account_id', $account->id)
-            ->latest()
-            ->limit(100)
-            ->get()
-            ->filter(fn (WhatsAppCall $call) => $normalizedWaIds->contains(preg_replace('/\D+/', '', (string) $call->phone_number)))
-            ->take(50)
-            ->map(fn (WhatsAppCall $call) => [
-                'id' => $call->id,
-                'whatsapp_connection_id' => $call->whatsapp_connection_id,
-                'direction' => $call->direction,
-                'phone_number' => $call->phone_number,
-                'contact_name' => $call->contact_name,
-                'status' => $call->status,
-                'route_mode' => $call->route_mode,
-                'routed_to' => $call->routed_to,
-                'provider_call_id' => $call->provider_call_id,
-                'duration_seconds' => $call->duration_seconds,
-                'summary' => $call->summary,
-                'metadata' => $call->metadata ?? [],
-                'agent' => $call->agent ? [
-                    'id' => $call->agent->id,
-                    'name' => $call->agent->name,
-                ] : null,
-                'created_at' => $call->created_at?->toIso8601String(),
-                'updated_at' => $call->updated_at?->toIso8601String(),
-            ])
-            ->values()
-            ->all();
     }
 
     public function ctwaForConversation(WhatsAppConversation $conversation): ?array

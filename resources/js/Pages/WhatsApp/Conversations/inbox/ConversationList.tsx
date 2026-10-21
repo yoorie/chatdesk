@@ -112,9 +112,7 @@ export function ConversationList({
       <div className="flex-shrink-0 border-b border-gray-100 p-4 dark:border-ui-dark-border">
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h1 className="text-base font-semibold text-ui-text dark:text-ui-dark-text">
-              Inbox
-            </h1>
+            <h1 className="text-base font-semibold text-ui-text dark:text-ui-dark-text">Inbox</h1>
             <p className="text-[11px] text-ui-text-muted dark:text-ui-dark-text-muted">
               {filteredConversations.length} conversations
             </p>

@@ -2,9 +2,7 @@
 
 namespace Tests\Feature\Contacts;
 
-use App\Core\Billing\SubscriptionService;
 use App\Models\Account;
-use App\Models\Plan;
 use App\Models\User;
 use App\Modules\WhatsApp\Models\WhatsAppContact;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,17 +15,12 @@ class ContactWorkspaceIsolationTest extends TestCase
     public function test_contact_route_binding_does_not_cross_switch_workspaces(): void
     {
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
 
         $user = User::factory()->create();
         $firstAccount = Account::factory()->create(['owner_id' => $user->id, 'name' => 'First workspace']);
         $secondAccount = Account::factory()->create(['owner_id' => $user->id, 'name' => 'Second workspace']);
         $firstAccount->users()->attach($user->id, ['role' => 'owner']);
         $secondAccount->users()->attach($user->id, ['role' => 'owner']);
-
-        $plan = Plan::where('key', 'self-hosted')->firstOrFail();
-        app(SubscriptionService::class)->changePlan($firstAccount, $plan, $user);
-        app(SubscriptionService::class)->changePlan($secondAccount, $plan, $user);
 
         $firstContact = WhatsAppContact::create([
             'account_id' => $firstAccount->id,

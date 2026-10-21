@@ -13,7 +13,7 @@ import {
 } from './types';
 
 interface Props {
-  contactTab: 'media' | 'profile' | 'calls' | 'notes' | 'activity' | 'orders';
+  contactTab: 'media' | 'profile' | 'notes' | 'activity' | 'orders';
   activeLabels: string[];
   activeConversation: Conversation;
   activeAgentName: string;

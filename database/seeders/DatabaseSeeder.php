@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([ModuleSeeder::class, PlanSeeder::class]);
+        $this->call([ModuleSeeder::class]);
 
         // A command-line install (`php artisan migrate --seed`) is complete at this point,
         // so mark it installed and skip the web installer in public/install/.

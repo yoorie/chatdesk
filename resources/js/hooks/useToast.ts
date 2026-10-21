@@ -81,10 +81,7 @@ export function useToast() {
                 ...rawToast,
                 title,
                 description,
-                action:
-                  rawToast.action ??
-                  friendlyErrorAction(description || title) ??
-                  undefined,
+                action: rawToast.action ?? friendlyErrorAction(description || title) ?? undefined,
                 duration: rawToast.duration ?? (variant === 'error' ? 8000 : undefined),
               };
             })()

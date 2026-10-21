@@ -2,9 +2,7 @@
 
 namespace Tests\Feature\Contacts;
 
-use App\Core\Billing\SubscriptionService;
 use App\Models\Account;
-use App\Models\Plan;
 use App\Models\User;
 use App\Modules\Contacts\Models\ContactImportBatch;
 use App\Modules\Contacts\Models\ContactTag;
@@ -27,14 +25,11 @@ class ContactImportTest extends TestCase
         parent::setUp();
 
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
 
         $this->user = User::factory()->create();
         $this->account = Account::factory()->create(['owner_id' => $this->user->id]);
         $this->account->users()->attach($this->user->id, ['role' => 'owner']);
 
-        $plan = Plan::where('key', 'self-hosted')->firstOrFail();
-        app(SubscriptionService::class)->changePlan($this->account, $plan, $this->user);
     }
 
     public function test_owner_can_bulk_import_contacts_from_csv(): void

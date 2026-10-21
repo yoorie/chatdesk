@@ -41,8 +41,8 @@ class ModuleRegistry
         $settingsService = app(\App\Services\PlatformSettingsService::class);
         $analyticsEnabled = $settingsService->isFeatureEnabled('analytics');
 
-        $planResolver = app(\App\Core\Billing\PlanResolver::class);
-        $effectiveModuleKeys = $planResolver->getEffectiveModules($account);
+        $moduleAccess = app(\App\Core\Modules\ModuleAccess::class);
+        $effectiveModuleKeys = $moduleAccess->getEffectiveModules($account);
 
         return $this->all()->filter(function ($module) use ($effectiveModuleKeys, $analyticsEnabled) {
             $moduleKey = $module['key'];

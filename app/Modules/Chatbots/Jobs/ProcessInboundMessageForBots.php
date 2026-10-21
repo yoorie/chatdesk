@@ -5,10 +5,9 @@ namespace App\Modules\Chatbots\Jobs;
 use App\Modules\Chatbots\Services\BotRuntime;
 use App\Modules\WhatsApp\Events\Inbox\AuditEventAdded;
 use App\Modules\WhatsApp\Events\Inbox\ConversationUpdated;
-use App\Modules\WhatsApp\Models\WhatsAppConversationAuditEvent;
 use App\Modules\WhatsApp\Models\WhatsAppConversation;
+use App\Modules\WhatsApp\Models\WhatsAppConversationAuditEvent;
 use App\Modules\WhatsApp\Models\WhatsAppMessage;
-use App\Services\AI\AiAgentAutopilotService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -43,7 +42,7 @@ class ProcessInboundMessageForBots implements ShouldBeUnique, ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(BotRuntime $botRuntime, AiAgentAutopilotService $aiAgentAutopilot): void
+    public function handle(BotRuntime $botRuntime): void
     {
         $this->inboundMessage->refresh();
         $this->conversation->refresh();
@@ -65,72 +64,25 @@ class ProcessInboundMessageForBots implements ShouldBeUnique, ShouldQueue
         ]);
 
         $chatbotsEnabled = module_enabled($account, 'automation.chatbots');
-        $aiEnabled = module_enabled($account, 'ai');
 
-        $this->setProcessingState($chatbotsEnabled ? 'automation' : 'ai');
-        $this->recordStatus('automation_running', $chatbotsEnabled ? 'Checking for an auto-reply' : 'Writing an AI reply', [
+        $this->setProcessingState('automation');
+        $this->recordStatus('automation_running', 'Checking for an auto-reply', [
             'inbound_message_id' => $this->inboundMessage->id,
             'chatbots_enabled' => $chatbotsEnabled,
-            'ai_enabled' => $aiEnabled,
         ]);
 
-        $chatbotMatched = false;
+        $chatbotMatched = $chatbotsEnabled
+            && $botRuntime->processInboundMessage($this->inboundMessage, $this->conversation);
 
-        if ($chatbotsEnabled) {
-            $chatbotMatched = $botRuntime->processInboundMessage($this->inboundMessage, $this->conversation);
-        }
-
-        $aiResult = null;
-
-        if (! $chatbotMatched && $aiEnabled) {
-            try {
-                $this->recordStatus('ai_replying', 'Writing an AI reply', [
-                    'inbound_message_id' => $this->inboundMessage->id,
-                ]);
-                $aiResult = $aiAgentAutopilot->process($this->inboundMessage, $this->conversation);
-            } catch (\Throwable $e) {
-                $aiResult = [
-                    'status' => 'failed',
-                    'reason' => 'exception',
-                    'error' => $e->getMessage(),
-                ];
-                $this->recordStatus('automation_failed', "Auto-reply couldn't be sent", [
-                    'inbound_message_id' => $this->inboundMessage->id,
-                    'error' => $e->getMessage(),
-                ]);
-                Log::channel('whatsapp')->warning('AI agent fallback processing failed', [
-                    'account_id' => $account->id,
-                    'conversation_id' => $this->conversation->id,
-                    'message_id' => $this->inboundMessage->id,
-                    'meta_message_id' => $this->inboundMessage->meta_message_id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        if ($chatbotMatched || (($aiResult['status'] ?? null) === 'sent')) {
-            $this->recordStatus('automation_completed', $chatbotMatched ? 'Replied automatically' : 'AI replied', [
+        if ($chatbotMatched) {
+            $this->recordStatus('automation_completed', 'Replied automatically', [
                 'inbound_message_id' => $this->inboundMessage->id,
-                'chatbot_matched' => $chatbotMatched,
-                'ai_result' => $aiResult,
-            ]);
-        } elseif (($aiResult['status'] ?? null) === 'failed') {
-            // Exceptions were already recorded above; don't add a second "couldn't be sent" line.
-            if (($aiResult['reason'] ?? null) !== 'exception') {
-                $this->recordStatus('automation_failed', "Auto-reply couldn't be sent", [
-                    'inbound_message_id' => $this->inboundMessage->id,
-                    'ai_result' => $aiResult,
-                ]);
-            }
-        } elseif (($aiResult['status'] ?? null) === 'skipped') {
-            $this->recordStatus('automation_skipped', $this->aiSkippedDescription((string) ($aiResult['reason'] ?? 'skipped')), [
-                'inbound_message_id' => $this->inboundMessage->id,
-                'ai_result' => $aiResult,
+                'chatbot_matched' => true,
             ]);
         } else {
             $this->recordStatus('automation_skipped', 'No auto-reply sent', [
                 'inbound_message_id' => $this->inboundMessage->id,
-                'reason' => 'no_matching_bot_or_ai_disabled',
+                'reason' => 'no_matching_bot',
             ]);
         }
 
@@ -163,21 +115,6 @@ class ProcessInboundMessageForBots implements ShouldBeUnique, ShouldQueue
             'meta_message_id' => $this->inboundMessage->meta_message_id,
             'error' => $e->getMessage(),
         ]);
-    }
-
-    protected function aiSkippedDescription(string $reason): string
-    {
-        return match ($reason) {
-            'no_active_autopilot_agent' => 'No auto-reply sent: no AI assistant is switched on',
-            'auto_reply_cap_reached' => 'No auto-reply sent: daily reply limit reached',
-            'recent_human_reply' => 'No auto-reply sent: a team member replied recently',
-            'unsupported_message_type' => 'No auto-reply sent: this kind of message needs a person',
-            'conversation_closed' => 'No auto-reply sent: chat is closed',
-            'ai_module_unavailable' => 'No auto-reply sent: AI replies are not on your plan',
-            'escalation_keyword' => 'Handed to your team: customer asked for a person',
-            'empty_suggestion' => 'No auto-reply sent: nothing useful to say',
-            default => 'No auto-reply sent',
-        };
     }
 
     protected function recordStatus(string $eventType, string $description, array $meta = []): void

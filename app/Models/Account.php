@@ -76,24 +76,11 @@ class Account extends Model
     }
 
     /**
-     * Get the account subscription.
-     */
-    public function subscription()
-    {
-        return $this->hasOne(Subscription::class);
-    }
-
-    /**
      * Get account usage records.
      */
     public function usage()
     {
         return $this->hasMany(AccountUsage::class);
-    }
-
-    public function integrations()
-    {
-        return $this->hasMany(AccountIntegration::class);
     }
 
     public function apiKeys()
@@ -119,26 +106,6 @@ class Account extends Model
     public function catalogProducts()
     {
         return $this->hasMany(AccountCatalogProduct::class);
-    }
-
-    public function mediaAssets()
-    {
-        return $this->hasMany(AccountMediaAsset::class);
-    }
-
-    public function appointments()
-    {
-        return $this->hasMany(AccountAppointment::class);
-    }
-
-    public function metaLeads()
-    {
-        return $this->hasMany(AccountMetaLead::class);
-    }
-
-    public function deals()
-    {
-        return $this->hasMany(AccountDeal::class);
     }
 
     /**

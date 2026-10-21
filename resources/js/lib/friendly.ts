@@ -1,5 +1,5 @@
 import { appUrl } from '@/lib/appUrl';
-import { brandName } from './brand';
+import { brandName } from './brand.ts';
 /**
  * Customer-facing wording helpers.
  *
@@ -88,12 +88,7 @@ const STATUS_LABELS: Record<string, string> = {
   medium: 'Medium',
   low: 'Low',
   unknown: 'Not available yet',
-  // Billing / subscription
-  trial: 'Free trial',
-  trialing: 'Free trial',
-  past_due: 'Payment overdue',
-  unpaid: 'Payment overdue',
-  grace: 'Payment overdue',
+  // Payments
   suspended: 'Paused',
   paid: 'Paid',
   refunded: 'Refunded',
@@ -120,71 +115,6 @@ const STATUS_LABELS: Record<string, string> = {
   member: 'Agent',
 };
 
-const STATUS_TONES: Record<string, FriendlyTone> = {
-  active: 'success',
-  enabled: 'success',
-  approved: 'success',
-  reinstated: 'success',
-  connected: 'success',
-  configured: 'success',
-  healthy: 'success',
-  ok: 'success',
-  completed: 'success',
-  complete: 'success',
-  done: 'success',
-  delivered: 'success',
-  read: 'success',
-  paid: 'success',
-  verified: 'success',
-  published: 'success',
-  open: 'success',
-  green: 'success',
-  high: 'success',
-  answered: 'success',
-  pending: 'warning',
-  pending_review: 'warning',
-  in_appeal: 'warning',
-  under_review: 'warning',
-  submitted: 'warning',
-  processing: 'info',
-  in_progress: 'info',
-  running: 'info',
-  queued: 'info',
-  scheduled: 'info',
-  sending: 'info',
-  sent: 'info',
-  trial: 'info',
-  trialing: 'info',
-  paused: 'warning',
-  paused_by_meta: 'warning',
-  snoozed: 'warning',
-  partial: 'warning',
-  partially_completed: 'warning',
-  degraded: 'warning',
-  yellow: 'warning',
-  medium: 'warning',
-  awaiting_payment: 'warning',
-  awaiting_approval: 'warning',
-  pending_approval: 'warning',
-  restricted: 'warning',
-  limit_exceeded: 'warning',
-  invited: 'warning',
-  failed: 'danger',
-  error: 'danger',
-  rejected: 'danger',
-  undelivered: 'danger',
-  unhealthy: 'danger',
-  expired: 'danger',
-  past_due: 'danger',
-  unpaid: 'danger',
-  banned: 'danger',
-  blocked: 'danger',
-  flagged: 'danger',
-  red: 'danger',
-  low: 'danger',
-  missed: 'danger',
-};
-
 function normalizeKey(value: unknown): string {
   return String(value ?? '')
     .trim()
@@ -206,10 +136,6 @@ export function friendlyStatus(value: unknown, fallback = '—'): string {
   // Unknown value: make it readable rather than showing snake_case.
   const words = key.replace(/_/g, ' ');
   return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
-export function friendlyStatusTone(value: unknown): FriendlyTone {
-  return STATUS_TONES[normalizeKey(value)] ?? 'default';
 }
 
 /** Map well-known Meta (WhatsApp Cloud / Graph) error codes to plain language. */

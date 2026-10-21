@@ -10,14 +10,7 @@ if (! function_exists('module_enabled')) {
             return false;
         }
 
-        $moduleAliases = [
-            'ai.voice' => 'whatsapp.calling',
-            'whatsapp.calling' => 'ai.voice',
-        ];
-        $candidateKeys = array_values(array_unique(array_filter([
-            $moduleKey,
-            $moduleAliases[$moduleKey] ?? null,
-        ])));
+        $candidateKeys = [$moduleKey];
 
         // First check: module must be enabled at platform level
         $module = \App\Models\Module::whereIn('key', $candidateKeys)
@@ -27,7 +20,7 @@ if (! function_exists('module_enabled')) {
             return false;
         }
 
-        $effectiveModules = app(\App\Core\Billing\PlanResolver::class)->getEffectiveModules($account);
+        $effectiveModules = app(\App\Core\Modules\ModuleAccess::class)->getEffectiveModules($account);
 
         return count(array_intersect($candidateKeys, $effectiveModules)) > 0;
     }

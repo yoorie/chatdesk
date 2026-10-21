@@ -2,10 +2,7 @@
 
 namespace Tests;
 
-use App\Core\Billing\SubscriptionService;
 use App\Models\Account;
-use App\Models\AccountUsage;
-use App\Models\Plan;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
@@ -35,38 +32,9 @@ abstract class TestCase extends BaseTestCase
     /**
      * Create account with plan.
      */
-    protected function createAccountWithPlan(string $planKey, string $status = 'active'): Account
+    protected function createAccount(): Account
     {
-        $plan = Plan::where('key', $planKey)->firstOrFail();
-        $account = Account::factory()->create();
-
-        $subscriptionService = app(SubscriptionService::class);
-
-        if ($status === 'trialing' && $plan->trial_days > 0) {
-            $subscriptionService->startTrial($account, $plan);
-        } else {
-            $subscriptionService->changePlan($account, $plan);
-        }
-
-        return $account->fresh();
-    }
-
-    /**
-     * Set account usage for a period.
-     */
-    protected function setUsage(Account $account, string $period, int $messagesSent = 0, int $templateSends = 0, int $aiCredits = 0): AccountUsage
-    {
-        return AccountUsage::updateOrCreate(
-            [
-                'account_id' => $account->id,
-                'period' => $period,
-            ],
-            [
-                'messages_sent' => $messagesSent,
-                'template_sends' => $templateSends,
-                'ai_credits_used' => $aiCredits,
-            ]
-        );
+        return Account::factory()->create()->fresh();
     }
 
     /**

@@ -48,7 +48,6 @@ interface BotItem {
 type Connection = { id: number; name: string };
 export type AutomationOptions = {
   agents: Array<{ id: number; name: string; email?: string; role?: string }>;
-  ai_agents?: Array<{ id: number; name: string; role?: string; mode?: string }>;
   tags: Array<{ id: number; name: string; color?: string }>;
   segments?: Array<{ id: number; name: string; contact_count?: number }>;
   templates: Array<{ id: number; name: string; language?: string; status?: string }>;
@@ -519,8 +518,6 @@ export function NodeConfigFields({
           <option value="update_contact">Update contact</option>
           <option value="assign_agent">Assign agent</option>
           <option value="handoff">Human handoff</option>
-          <option value="create_deal">Create deal</option>
-          <option value="create_appointment">Create appointment</option>
         </select>
       </label>
 
@@ -885,100 +882,6 @@ export function NodeConfigFields({
               />
             </label>
           )}
-        </div>
-      )}
-
-      {actionType === 'create_deal' && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text sm:col-span-2">
-            Deal title
-            <TextInput
-              className="mt-1"
-              value={config.title || ''}
-              onChange={(event) => onChange('title', event.target.value)}
-            />
-          </label>
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-            Stage
-            <TextInput
-              className="mt-1"
-              value={config.stage || 'new'}
-              onChange={(event) => onChange('stage', event.target.value)}
-            />
-          </label>
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-            Value paise
-            <TextInput
-              className="mt-1"
-              type="number"
-              value={config.value || 0}
-              onChange={(event) => onChange('value', Number(event.target.value))}
-            />
-          </label>
-        </div>
-      )}
-
-      {actionType === 'create_appointment' && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text sm:col-span-2">
-            Title
-            <TextInput
-              className="mt-1"
-              value={config.title || 'WhatsApp appointment'}
-              onChange={(event) => onChange('title', event.target.value)}
-            />
-          </label>
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-            Minutes from now
-            <TextInput
-              className="mt-1"
-              type="number"
-              value={config.minutes_from_now || 60}
-              onChange={(event) => onChange('minutes_from_now', Number(event.target.value))}
-            />
-          </label>
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-            Duration minutes
-            <TextInput
-              className="mt-1"
-              type="number"
-              value={config.duration_minutes || 30}
-              onChange={(event) => onChange('duration_minutes', Number(event.target.value))}
-            />
-          </label>
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-            Staff
-            <TextInput
-              className="mt-1"
-              value={config.staff_name || ''}
-              onChange={(event) => onChange('staff_name', event.target.value)}
-            />
-          </label>
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
-            Location
-            <TextInput
-              className="mt-1"
-              value={config.location || ''}
-              onChange={(event) => onChange('location', event.target.value)}
-            />
-          </label>
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text sm:col-span-2">
-            Meeting URL
-            <TextInput
-              className="mt-1"
-              value={config.meeting_url || ''}
-              onChange={(event) => onChange('meeting_url', event.target.value)}
-            />
-          </label>
-          <label className="text-sm font-medium text-ui-text dark:text-ui-dark-text sm:col-span-2">
-            Notes
-            <textarea
-              className={textAreaClass}
-              rows={3}
-              value={config.description || ''}
-              onChange={(event) => onChange('description', event.target.value)}
-            />
-          </label>
         </div>
       )}
     </div>

@@ -1,10 +1,17 @@
 <div align="center">
 
+<a href="https://yoorie.com">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/yoorie-logo-white.png">
+    <img src="docs/assets/yoorie-logo.png" alt="Yoorie" width="220">
+  </picture>
+</a>
+
 # ChatDesk
 
 **Self-hosted WhatsApp Cloud API inbox for your business. Open source, built with Laravel.**
 
-**Built by [Yoorie](https://yoorie.com)** · [Live demo](https://demo.yoorie.com/chatdesk) · [Docs](https://demo.yoorie.com/chatdesk/docs/) · [Connect WhatsApp guide](docs/connect-whatsapp.md)
+**Built by [Yoorie](https://yoorie.com)** · [Project site](https://chatdesk.yoorie.com) · [Docs](docs/) · [Connect WhatsApp guide](docs/connect-whatsapp.md)
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 ![PHP 8.2+](https://img.shields.io/badge/PHP-8.2%2B-777bb4)
@@ -14,6 +21,8 @@
 
 > **Want to run it as a SaaS, or need more?** Get a paid plan at **[chatdesk.yoorie.com](https://chatdesk.yoorie.com)**
 > or use **[Zyptos](https://zyptos.com)**, the premium version of ChatDesk.
+>
+> **Need a custom feature or integration?** Yoorie builds them on demand. See [Custom features & development by Yoorie](#custom-features--development-by-yoorie).
 
 ---
 
@@ -100,6 +109,18 @@ Taken from a local install with fictional demo data (`php artisan db:seed --clas
 | Hosted for you, updates & priority support | — | ✅ |
 
 👉 **[chatdesk.yoorie.com](https://chatdesk.yoorie.com)** · **[zyptos.com](https://zyptos.com)**
+
+## Custom features & development by Yoorie
+
+ChatDesk is built and maintained by **[Yoorie](https://yoorie.com)**. We can:
+
+- **Add new features** to ChatDesk
+- **Improve or customise** ChatDesk for your workflow and branding
+- **Build custom features and integrations** for your business, on demand (CRMs, ERPs, payment
+  gateways, internal tools and more)
+
+📧 **[hello@yoorie.com](mailto:hello@yoorie.com)** · 🌐 **[yoorie.com](https://yoorie.com)** ·
+💼 Paid plans at **[chatdesk.yoorie.com](https://chatdesk.yoorie.com)** or **[Zyptos](https://zyptos.com)**
 
 ## Requirements
 
@@ -189,6 +210,17 @@ Pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 Security issues: see [SECURITY.md](SECURITY.md) and email **support@yoorie.com** (please do not open a public issue).
 
 ## Authors & contributors
+
+<p align="center">
+  <a href="https://yoorie.com">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/yoorie-logo-white.png">
+      <img src="docs/assets/yoorie-logo.png" alt="Yoorie" width="160">
+    </picture>
+  </a>
+  <br>
+  <strong>Built by <a href="https://yoorie.com">Yoorie</a></strong>
+</p>
 
 - **[Yoorie](https://yoorie.com)** – creator and maintainer
 - **Prashant Pandey ([@mprashantpandey](https://github.com/mprashantpandey))** – contributor

@@ -51,9 +51,7 @@ function ToastItem({ toast, onClose }: { toast: any; onClose: () => void }) {
     >
       <Icon className="h-5 w-5 flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-ui-text dark:text-ui-dark-text">
-          {toast.title}
-        </p>
+        <p className="text-sm font-semibold text-ui-text dark:text-ui-dark-text">{toast.title}</p>
         {toast.description && (
           <p className="mt-0.5 text-xs text-ui-text-muted dark:text-ui-dark-text-muted">
             {toast.description}

@@ -3,7 +3,7 @@
  * The base comes from <meta name="app-base"> (the request base path) or from
  * Inertia's shared Ziggy URL. Domain-root installs have an empty base.
  */
-export function appBase(hint?: string): string {
+function appBase(hint?: string): string {
   const hinted = normalizeBase(hint);
   if (hinted) return hinted;
 

@@ -47,7 +47,7 @@ export const flattenAudioSamples = (chunks: Float32Array[]): Float32Array => {
   return samples;
 };
 
-export const floatTo16BitPcm = (samples: Float32Array): Int16Array => {
+const floatTo16BitPcm = (samples: Float32Array): Int16Array => {
   const pcm = new Int16Array(samples.length);
   for (let index = 0; index < samples.length; index += 1) {
     const sample = Math.max(-1, Math.min(1, samples[index]));

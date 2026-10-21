@@ -2,10 +2,6 @@
 
 namespace App\Modules\Chatbots\Services;
 
-use App\Core\Billing\EntitlementService;
-use App\Core\Billing\UsageService;
-use App\Models\AccountAppointment;
-use App\Models\AccountDeal;
 use App\Modules\Chatbots\Models\BotEdge;
 use App\Modules\Chatbots\Models\BotNode;
 use App\Modules\Contacts\Models\ContactSegment;
@@ -17,6 +13,7 @@ use App\Modules\WhatsApp\Models\WhatsAppList;
 use App\Modules\WhatsApp\Models\WhatsAppMessage;
 use App\Modules\WhatsApp\Services\TemplateComposer;
 use App\Modules\WhatsApp\Services\WhatsAppClient;
+use App\Services\UsageService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -29,7 +26,6 @@ class ActionExecutor
     public function __construct(
         protected WhatsAppClient $whatsappClient,
         protected TemplateComposer $templateComposer,
-        protected EntitlementService $entitlementService,
         protected UsageService $usageService
     ) {}
 
@@ -40,7 +36,7 @@ class ActionExecutor
     {
         $type = $node->type;
         $config = $node->config;
-        $directActionTypes = ['send_text', 'send_template', 'send_buttons', 'send_list', 'send_media', 'send_flow', 'assign_agent', 'add_tag', 'add_segment', 'update_contact', 'create_deal', 'create_appointment', 'set_status', 'set_priority', 'handoff'];
+        $directActionTypes = ['send_text', 'send_template', 'send_buttons', 'send_list', 'send_media', 'send_flow', 'assign_agent', 'add_tag', 'add_segment', 'update_contact', 'set_status', 'set_priority', 'handoff'];
 
         if (in_array($type, $directActionTypes, true)) {
             $config['action_type'] = $type;
@@ -71,8 +67,6 @@ class ActionExecutor
             'add_tag' => $this->addTag($config, $context),
             'add_segment' => $this->addSegment($config, $context),
             'update_contact' => $this->updateContact($config, $context),
-            'create_deal' => $this->createDeal($config, $context),
-            'create_appointment' => $this->createAppointment($config, $context),
             'set_status' => $this->setStatus($config, $context),
             'set_priority' => $this->setPriority($config, $context),
             'handoff' => $this->handoff($config, $context),
@@ -84,7 +78,6 @@ class ActionExecutor
     {
         try {
             // Check message limit
-            $this->entitlementService->assertWithinLimit($context->account, 'messages_monthly', 1);
 
             // Rate limit check (max 10 messages per conversation per minute)
             $rateLimitKey = "bot_rate_limit:{$context->conversation->id}";
@@ -157,8 +150,6 @@ class ActionExecutor
     {
         try {
             // Check limits
-            $this->entitlementService->assertWithinLimit($context->account, 'messages_monthly', 1);
-            $this->entitlementService->assertWithinLimit($context->account, 'template_sends_monthly', 1);
 
             $templateId = $config['template_id'] ?? null;
             $variables = $config['variables'] ?? [];
@@ -233,7 +224,6 @@ class ActionExecutor
     protected function sendButtonsMessage(array $config, BotContext $context): array
     {
         try {
-            $this->entitlementService->assertWithinLimit($context->account, 'messages_monthly', 1);
 
             $bodyText = trim((string) ($config['body_text'] ?? $config['message'] ?? ''));
             $buttons = $config['buttons'] ?? [];
@@ -330,7 +320,6 @@ class ActionExecutor
     protected function sendListMessage(array $config, BotContext $context): array
     {
         try {
-            $this->entitlementService->assertWithinLimit($context->account, 'messages_monthly', 1);
 
             $listId = $config['list_id'] ?? null;
             if (! is_numeric($listId) || (int) $listId <= 0) {
@@ -418,7 +407,6 @@ class ActionExecutor
     protected function sendMediaMessage(array $config, BotContext $context): array
     {
         try {
-            $this->entitlementService->assertWithinLimit($context->account, 'messages_monthly', 1);
 
             $mediaType = strtolower((string) ($config['media_type'] ?? 'image'));
             if (! in_array($mediaType, ['image', 'video', 'document', 'audio'], true)) {
@@ -494,7 +482,6 @@ class ActionExecutor
     protected function sendFlowMessage(array $config, BotContext $context): array
     {
         try {
-            $this->entitlementService->assertWithinLimit($context->account, 'messages_monthly', 1);
 
             $flowId = $config['flow_id'] ?? null;
             $metaFlowId = trim((string) ($config['meta_flow_id'] ?? ''));
@@ -650,39 +637,6 @@ class ActionExecutor
         return ['success' => true, 'contact_id' => $contact->id, 'updated' => array_keys($updates)];
     }
 
-    protected function createDeal(array $config, BotContext $context): array
-    {
-        $contact = $context->conversation->contact;
-        $title = trim((string) ($config['title'] ?? 'WhatsApp lead'));
-        if ($title === '') {
-            return ['success' => false, 'error' => 'Deal title is required'];
-        }
-
-        $ownerId = $config['owner_id'] ?? $context->conversation->assigned_to;
-        if ($ownerId && ! in_array((int) $ownerId, $context->account->getAssignableAgentIds(), true)) {
-            return ['success' => false, 'error' => 'Deal owner is not an account team member'];
-        }
-
-        $deal = AccountDeal::create([
-            'account_id' => $context->account->id,
-            'whatsapp_contact_id' => $contact?->id,
-            'whatsapp_conversation_id' => $context->conversation->id,
-            'owner_id' => $ownerId ? (int) $ownerId : null,
-            'title' => $title,
-            'stage' => $config['stage'] ?? 'new',
-            'value' => max(0, (int) ($config['value'] ?? 0)),
-            'currency' => strtoupper((string) ($config['currency'] ?? 'INR')),
-            'source' => $config['source'] ?? 'automation',
-            'next_follow_up_at' => ! empty($config['next_follow_up_at']) ? \Illuminate\Support\Carbon::parse($config['next_follow_up_at']) : null,
-            'metadata' => [
-                'bot_execution_id' => $context->metadata['execution_id'] ?? null,
-                'node_source' => 'chatbot_action',
-            ],
-        ]);
-
-        return ['success' => true, 'deal_id' => $deal->id];
-    }
-
     protected function addTag(array $config, BotContext $context): array
     {
         $contact = $context->conversation->contact;
@@ -831,51 +785,6 @@ class ActionExecutor
         event(new ConversationUpdated($context->conversation));
 
         return ['success' => true];
-    }
-
-    protected function createAppointment(array $config, BotContext $context): array
-    {
-        $contact = $context->conversation->contact;
-        if (! $contact) {
-            return ['success' => false, 'error' => 'No contact available for appointment'];
-        }
-
-        $title = trim((string) ($config['title'] ?? 'WhatsApp appointment'));
-        $scheduledAt = trim((string) ($config['scheduled_at'] ?? ''));
-        $minutesFromNow = (int) ($config['minutes_from_now'] ?? 0);
-
-        try {
-            $date = $scheduledAt !== ''
-                ? \Illuminate\Support\Carbon::parse($scheduledAt)
-                : now()->addMinutes(max(15, $minutesFromNow ?: 60));
-        } catch (\Throwable) {
-            return ['success' => false, 'error' => 'Invalid appointment date'];
-        }
-
-        $appointment = AccountAppointment::create([
-            'account_id' => $context->account->id,
-            'external_source' => 'chatbot_flow',
-            'external_id' => 'conversation_'.$context->conversation->id.'_'.($context->metadata['execution_id'] ?? time()),
-            'title' => $title,
-            'contact_name' => $contact->name ?: $contact->wa_id,
-            'contact_phone' => $contact->phone ?: $contact->wa_id,
-            'scheduled_at' => $date,
-            'duration_minutes' => max(5, min(480, (int) ($config['duration_minutes'] ?? 30))),
-            'staff_name' => trim((string) ($config['staff_name'] ?? '')) ?: null,
-            'status' => $config['status'] ?? 'scheduled',
-            'type' => trim((string) ($config['type'] ?? 'WhatsApp')) ?: 'WhatsApp',
-            'location' => trim((string) ($config['location'] ?? '')) ?: null,
-            'meeting_url' => trim((string) ($config['meeting_url'] ?? '')) ?: null,
-            'description' => trim((string) ($config['description'] ?? 'Created by chatbot automation')) ?: null,
-            'reminder_enabled' => (bool) ($config['reminder_enabled'] ?? true),
-            'reminder_minutes_before' => max(0, min(10080, (int) ($config['reminder_minutes_before'] ?? 60))),
-            'metadata' => [
-                'conversation_id' => $context->conversation->id,
-                'bot_execution_id' => $context->metadata['execution_id'] ?? null,
-            ],
-        ]);
-
-        return ['success' => true, 'appointment_id' => $appointment->id, 'scheduled_at' => $appointment->scheduled_at?->toIso8601String()];
     }
 
     protected function limitWhatsAppText(string $text, int $maxChars = 1500): string

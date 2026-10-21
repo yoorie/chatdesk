@@ -2,9 +2,6 @@
 
 namespace App\Http\Controllers\PublicApi;
 
-use App\Core\Billing\EntitlementService;
-use App\Core\Billing\SubscriptionService;
-use App\Core\Billing\UsageService;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Modules\WhatsApp\Models\WhatsAppConnection;
@@ -16,6 +13,7 @@ use App\Modules\WhatsApp\Models\WhatsAppTemplate;
 use App\Modules\WhatsApp\Services\TemplateComposer;
 use App\Modules\WhatsApp\Services\TemplateSyncService;
 use App\Modules\WhatsApp\Services\WhatsAppClient;
+use App\Services\UsageService;
 use App\Services\WorkspaceWebhookDispatcher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,9 +24,7 @@ class WhatsAppController extends Controller
         protected WhatsAppClient $client,
         protected TemplateComposer $composer,
         protected TemplateSyncService $syncService,
-        protected EntitlementService $entitlementService,
         protected UsageService $usageService,
-        protected SubscriptionService $subscriptionService,
         protected WorkspaceWebhookDispatcher $webhookDispatcher
     ) {}
 
@@ -103,7 +99,6 @@ class WhatsAppController extends Controller
         ]);
 
         $this->assertActionAllowed($account);
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
         $connection = $this->connection($account, $validated['connection_id'] ?? null);
         $conversation = $this->conversation($account, $connection, $validated['to']);
 
@@ -126,8 +121,6 @@ class WhatsAppController extends Controller
         ]);
 
         $this->assertActionAllowed($account);
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
-        $this->entitlementService->assertWithinLimit($account, 'template_sends_monthly', 1);
         $connection = $this->connection($account, $validated['connection_id'] ?? null);
         $template = $this->template($account, $connection, $validated);
         $variables = array_values($validated['variables'] ?? []);
@@ -159,7 +152,6 @@ class WhatsAppController extends Controller
         ]);
 
         $this->assertActionAllowed($account);
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
         $connection = $this->connection($account, $validated['connection_id'] ?? null);
         $conversation = $this->conversation($account, $connection, $validated['to']);
 
@@ -188,7 +180,6 @@ class WhatsAppController extends Controller
         ]);
 
         $this->assertActionAllowed($account);
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
         $connection = $this->connection($account, $validated['connection_id'] ?? null);
         $conversation = $this->conversation($account, $connection, $validated['to']);
         $location = [
@@ -213,7 +204,6 @@ class WhatsAppController extends Controller
         ]);
 
         $this->assertActionAllowed($account);
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
         $connection = $this->connection($account, $validated['connection_id'] ?? null);
         $list = WhatsAppList::where('account_id', $account->id)
             ->where('whatsapp_connection_id', $connection->id)
@@ -256,7 +246,6 @@ class WhatsAppController extends Controller
         ]);
 
         $this->assertActionAllowed($account);
-        $this->entitlementService->assertWithinLimit($account, 'messages_monthly', 1);
         $connection = $this->connection($account, $validated['connection_id'] ?? null);
         $conversation = $this->conversation($account, $connection, $validated['to']);
         $buttons = collect($validated['buttons'])
@@ -384,19 +373,6 @@ class WhatsAppController extends Controller
     {
         if (! $account->isActive()) {
             abort(403, 'Workspace is not active.');
-        }
-
-        $subscription = $account->subscription;
-        if ($subscription) {
-            $subscription = $this->subscriptionService->syncAndNormalize($subscription);
-        }
-
-        if (! $subscription) {
-            abort(402, 'Please select a plan before using this API action.');
-        }
-
-        if ($subscription->isPastDue() || $subscription->isCanceled()) {
-            abort(402, $subscription->last_error ?: 'Your plan is not active. Renew your plan before using this API action.');
         }
     }
 

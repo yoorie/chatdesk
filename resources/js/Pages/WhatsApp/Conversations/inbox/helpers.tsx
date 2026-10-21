@@ -16,7 +16,6 @@ import {
   type ConversationAuditEvent,
   type ConversationNote,
   type CustomerServiceWindow,
-  type InboxCallRecord,
 } from './types';
 
 export const inboxDebug = import.meta.env.VITE_INBOX_DEBUG === 'true';
@@ -31,63 +30,6 @@ export function shortcutFromButtonLabel(label: string) {
       .slice(0, 60) || 'button'
   );
 }
-
-export const callSessionSdpFrom = (value: any): string | null => {
-  const candidates = [
-    value?.session?.sdp,
-    value?.call?.metadata?.call?.session?.sdp,
-    value?.call?.metadata?.connect_response?.session?.sdp,
-    value?.call?.metadata?.connect_response?.calls?.[0]?.session?.sdp,
-    value?.metadata?.call?.session?.sdp,
-    value?.metadata?.connect_response?.session?.sdp,
-    value?.metadata?.connect_response?.calls?.[0]?.session?.sdp,
-    value?.metadata?.first_sdp,
-    value?.metadata?.latest_sdp,
-  ];
-
-  return (
-    candidates.find((candidate) => typeof candidate === 'string' && candidate.trim().length > 0) ||
-    null
-  );
-};
-
-export const isIncomingActionableCall = (
-  call?: InboxCallRecord | null
-): call is InboxCallRecord => {
-  if (!call) return false;
-
-  return call.direction === 'inbound' && ['received', 'ringing', 'queued'].includes(call.status);
-};
-
-export const isIncomingVisibleCall = (call?: InboxCallRecord | null): call is InboxCallRecord => {
-  if (!call) return false;
-
-  return (
-    call.direction === 'inbound' &&
-    ['received', 'ringing', 'queued', 'initiated', 'answered'].includes(call.status)
-  );
-};
-
-export const mergeCallRecords = (
-  current: InboxCallRecord[],
-  incoming: InboxCallRecord[]
-): InboxCallRecord[] => {
-  if (!incoming.length) return current;
-
-  const byId = new Map(current.map((call) => [Number(call.id), call]));
-  incoming.forEach((call) => {
-    if (!call?.id) return;
-    byId.set(Number(call.id), { ...(byId.get(Number(call.id)) ?? {}), ...call });
-  });
-
-  return Array.from(byId.values())
-    .sort(
-      (a, b) =>
-        new Date(b.updated_at || b.created_at || 0).getTime() -
-        new Date(a.updated_at || a.created_at || 0).getTime()
-    )
-    .slice(0, 100);
-};
 
 export const normalizeConversation = (value: any): Conversation | null => {
   if (!value || value.id == null) return null;
@@ -127,9 +69,6 @@ export const normalizeConversation = (value: any): Conversation | null => {
       id: connectionId,
       name: String(value?.connection?.name ?? 'Unknown'),
       slug: value?.connection?.slug ? String(value.connection.slug) : undefined,
-      calling_status: value?.connection?.calling_status ?? null,
-      calling_enabled: Boolean(value?.connection?.calling_enabled ?? false),
-      calling_webhook_subscribed: Boolean(value?.connection?.calling_webhook_subscribed ?? false),
     },
     assigned_to: value.assigned_to == null ? null : Number(value.assigned_to),
     priority: value.priority ?? null,
@@ -267,7 +206,7 @@ export const customerServiceWindowFor = (
       isOpen: false,
       label: '24h window closed',
       detail:
-        'You can reply freely for 24 hours after the customer\'s last message. After that, send an approved template to restart the chat.',
+        "You can reply freely for 24 hours after the customer's last message. After that, send an approved template to restart the chat.",
       lastInboundAt,
       expiresAt,
       tone: 'danger',
@@ -317,26 +256,6 @@ export const mergeLastInboundAt = (
   return previous ?? null;
 };
 
-export const isUsableAiSuggestion = (value: unknown): value is string => {
-  if (typeof value !== 'string') {
-    return false;
-  }
-
-  const text = value.trim();
-  if (text.length < 24) {
-    return false;
-  }
-
-  return ![
-    /\bto help me understand\s*$/i,
-    /\bplease share\s*$/i,
-    /\bcan you share\s*$/i,
-    /\bcould you share\s*$/i,
-    /\bmay i know\s*$/i,
-    /\btell me more about\s*$/i,
-  ].some((pattern) => pattern.test(text));
-};
-
 export const conversationModeLabel = (conversation?: Conversation | null): string => {
   if (!conversation) return 'No chat selected';
   if (conversation.automation_processing)
@@ -349,10 +268,6 @@ export const conversationModeLabel = (conversation?: Conversation | null): strin
 export const timelineBadgeForMessage = (
   message: ChatMessage
 ): { label: string; icon: LucideIcon; classes: string } | null => {
-  if (isCallTranscriptMessage(message)) {
-    return null;
-  }
-
   if (message.type === 'template') {
     return {
       label: 'Template sent',
@@ -467,16 +382,6 @@ export const labelClasses = (color: string) => {
   return classes[color] ?? classes.emerald;
 };
 
-export const isCallTranscriptMessage = (message: ChatMessage): boolean =>
-  message.payload?.source === 'voice_bridge' || message.payload?.voice_session_id != null;
-
-export const callTranscriptSpeaker = (message: ChatMessage): string => {
-  if (message.direction === 'inbound') return 'Caller';
-  if (message.payload?.source === 'ai_agent') return 'AI agent';
-
-  return 'Agent';
-};
-
 export const noteToTimelineMessage = (note: ConversationNote): ChatMessage => ({
   id: `note-${note.id}`,
   direction: 'inbound',
@@ -568,8 +473,7 @@ export const canReactToMessage = (message: ChatMessage): boolean =>
   Boolean(message.meta_message_id) &&
   !message.optimistic &&
   !String(message.id).startsWith('note-') &&
-  !['internal_note', 'reaction'].includes(message.type) &&
-  !isCallTranscriptMessage(message);
+  !['internal_note', 'reaction'].includes(message.type);
 
 export const emptyContactGallery = (): ContactGallery => ({
   media: [],

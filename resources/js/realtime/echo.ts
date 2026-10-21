@@ -153,11 +153,6 @@ function createEcho(config: {
   return echoInstance;
 }
 
-export function getEcho(): Echo<any> | null {
-  if (echoInstance) return echoInstance;
-  return typeof window !== 'undefined' ? window.Echo || null : null;
-}
-
 export function disconnectEcho(): void {
   const instance = echoInstance;
   echoInstance = null;

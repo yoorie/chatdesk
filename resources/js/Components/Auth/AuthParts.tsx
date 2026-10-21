@@ -3,16 +3,6 @@ import { cn } from '@/lib/utils';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 import { ChangeEvent, InputHTMLAttributes, ReactNode, useState } from 'react';
 
-export function AuthDivider({ label }: { label: string }) {
-  return (
-    <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wide text-ui-text-muted dark:text-ui-dark-text-muted">
-      <div className="h-px flex-1 bg-gray-200 dark:bg-slate-700" />
-      {label}
-      <div className="h-px flex-1 bg-gray-200 dark:bg-slate-700" />
-    </div>
-  );
-}
-
 export function AuthField({
   label,
   error,

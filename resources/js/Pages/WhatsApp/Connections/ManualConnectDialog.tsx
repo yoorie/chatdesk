@@ -43,7 +43,10 @@ export default function ManualConnectDialog({
     props: Record<string, unknown> = {}
   ) => (
     <div>
-      <label htmlFor={`wa-${key}`} className="text-sm font-medium text-ui-text dark:text-ui-dark-text">
+      <label
+        htmlFor={`wa-${key}`}
+        className="text-sm font-medium text-ui-text dark:text-ui-dark-text"
+      >
         {label}
       </label>
       <input
@@ -72,10 +75,29 @@ export default function ManualConnectDialog({
             Step-by-step guide
           </a>
         </p>
-        {field('phone_number_id', 'Phone Number ID', 'Numeric ID of your WhatsApp number, not the phone number itself.', { required: true, inputMode: 'numeric' })}
-        {field('waba_id', 'WhatsApp Business Account ID (WABA ID)', 'Shown under the phone number on the API Setup page.', { required: true, inputMode: 'numeric' })}
-        {field('access_token', 'Permanent access token', 'A System User token with whatsapp_business_messaging and whatsapp_business_management.', { required: true, type: 'password', autoComplete: 'off' })}
-        {field('business_phone', 'Display phone number (optional)', 'For example +91 98765 43210. Filled automatically when Meta returns it.')}
+        {field(
+          'phone_number_id',
+          'Phone Number ID',
+          'Numeric ID of your WhatsApp number, not the phone number itself.',
+          { required: true, inputMode: 'numeric' }
+        )}
+        {field(
+          'waba_id',
+          'WhatsApp Business Account ID (WABA ID)',
+          'Shown under the phone number on the API Setup page.',
+          { required: true, inputMode: 'numeric' }
+        )}
+        {field(
+          'access_token',
+          'Permanent access token',
+          'A System User token with whatsapp_business_messaging and whatsapp_business_management.',
+          { required: true, type: 'password', autoComplete: 'off' }
+        )}
+        {field(
+          'business_phone',
+          'Display phone number (optional)',
+          'For example +91 98765 43210. Filled automatically when Meta returns it.'
+        )}
         {field('name', 'Label (optional)', 'A friendly name for this number.')}
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>

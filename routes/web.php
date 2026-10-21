@@ -78,9 +78,9 @@ Route::get('/csrf-token/refresh', [\App\Http\Controllers\CsrfTokenController::cl
 Route::get('/cron/run', \App\Http\Controllers\CronRunController::class)
     ->name('cron.run');
 
-// App routes (requires auth + account + account active + account subscribed)
+// App routes (requires auth + account + account active)
 // restrict.chat.agent: chat agents (role member) only see Inbox; others have full access
-Route::middleware(['auth', 'account.resolve', 'account.active', 'account.subscribed', 'restrict.chat.agent'])->prefix('/app')->name('app.')->group(function () {
+Route::middleware(['auth', 'account.resolve', 'account.active', 'restrict.chat.agent'])->prefix('/app')->name('app.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

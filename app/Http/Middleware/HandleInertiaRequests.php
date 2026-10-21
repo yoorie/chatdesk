@@ -40,7 +40,6 @@ class HandleInertiaRequests extends Middleware
 
         $accounts = [];
         $navigation = [];
-        $lockedNavigation = [];
 
         $accountRole = null;
 
@@ -60,15 +59,13 @@ class HandleInertiaRequests extends Middleware
                 $moduleRegistry = app(\App\Core\Modules\ModuleRegistry::class);
                 $navigation = $moduleRegistry->getNavigationForAccount($account);
 
-                // Chat agents (role === 'member') only see Inbox + AI Assistant
+                // Chat agents (role === 'member') only see the inbox
                 if ($accountRole === 'member') {
                     $navigation = array_values(array_filter($navigation, function ($item) {
                         $href = $item['href'] ?? '';
 
                         return in_array($href, [
                             'app.whatsapp.conversations.index',
-                            'app.ai.index',
-                            'app.ai',
                             'app.notifications.index',
                         ], true);
                     }));
@@ -107,7 +104,6 @@ class HandleInertiaRequests extends Middleware
                             'group' => 'other']];
 
                     $navigation = array_merge($navigation, $staticNav);
-                    $lockedNavigation = $this->lockedNavigation($account, $moduleRegistry);
                 }
             }
         }
@@ -225,7 +221,6 @@ class HandleInertiaRequests extends Middleware
                     'quiet_hours_end' => $user->quiet_hours_end,
                     'two_factor_enabled' => $user->two_factor_enabled_at !== null,
                     'force_password_reset_at' => $user->force_password_reset_at?->toIso8601String(),
-                    'ai_suggestions_enabled' => $user->ai_suggestions_enabled ?? false,
                 ] : null,
                 'profile_complete' => $isProfileComplete],
             'account' => $account,
@@ -235,8 +230,6 @@ class HandleInertiaRequests extends Middleware
             'accounts' => $accounts,
             'workspaces' => $accounts,
             'navigation' => $navigation,
-            // Plan-gated features, shown locked with an upgrade hint instead of disappearing.
-            'locked_navigation' => $lockedNavigation,
             'notification_summary' => $notificationSummary,
             'inbox_summary' => $inboxSummary,
             'workspace_permissions' => $workspacePermissions,
@@ -249,9 +242,6 @@ class HandleInertiaRequests extends Middleware
                     'email' => $impersonator->email] : null,
                 'user_id' => $request->session()->get('impersonated_user_id'),
                 'account_id' => $request->session()->get('impersonated_account_id')],
-            'ai' => [
-                'enabled' => $this->toBoolean(PlatformSetting::get('ai.enabled', false)),
-                'provider' => PlatformSetting::get('ai.provider', 'openai')],
             'analyticsSettings' => [
                 'google_analytics_enabled' => PlatformSetting::get('analytics.google_analytics_enabled', false),
                 'google_analytics_id' => PlatformSetting::get('analytics.google_analytics_id'),
@@ -310,61 +300,5 @@ class HandleInertiaRequests extends Middleware
         }
 
         return (bool) $value;
-    }
-
-    /**
-     * Navigation items for modules the workspace's plan does not include, with the
-     * cheapest public plan that unlocks each one. Modules the workspace switched
-     * off itself (Tools page) are not listed.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    protected function lockedNavigation($account, \App\Core\Modules\ModuleRegistry $moduleRegistry): array
-    {
-        try {
-            $available = app(\App\Core\Billing\PlanResolver::class)->getAvailableModuleKeys($account);
-            $platformEnabled = \App\Models\Module::where('is_enabled', true)->pluck('key')->all();
-            $analyticsEnabled = app(\App\Services\PlatformSettingsService::class)->isFeatureEnabled('analytics');
-            $plans = \App\Models\Plan::query()
-                ->where('is_active', true)
-                ->where('is_public', true)
-                ->orderBy('sort_order')
-                ->orderBy('price_monthly')
-                ->get(['key', 'name', 'modules', 'sort_order', 'price_monthly']);
-
-            $items = [];
-            foreach ($moduleRegistry->all() as $module) {
-                $key = $module['key'] ?? null;
-                if (! $key
-                    || in_array($key, ['billing', 'support', 'core.dashboard'], true)
-                    || in_array($key, $available, true)
-                    || ! in_array($key, $platformEnabled, true)
-                    || empty($module['nav'])
-                    || ($key === 'analytics' && ! $analyticsEnabled)) {
-                    continue;
-                }
-
-                $plan = $plans->first(fn ($plan) => in_array($key, $plan->modules ?? [], true));
-                if (! $plan) {
-                    continue;
-                }
-
-                foreach ($module['nav'] as $navItem) {
-                    $items[] = [
-                        'label' => $navItem['label'] ?? '',
-                        'href' => $navItem['href'] ?? '',
-                        'icon' => $navItem['icon'] ?? 'Lock',
-                        'required_plan' => $plan->name,
-                        'required_plan_key' => $plan->key,
-                    ];
-                }
-            }
-
-            return $items;
-        } catch (\Throwable $e) {
-            report($e);
-
-            return [];
-        }
     }
 }

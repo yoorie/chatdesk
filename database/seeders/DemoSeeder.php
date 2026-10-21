@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 
 /**
- * Demo data for previews: modules, the internal plan and a sample organisation with
+ * Demo data for previews: modules and a sample organisation with
  * fictional contacts (+1 555 numbers, example.com emails). Run with:
  *   php artisan db:seed --class=DemoSeeder
  * Public demo logins (override with DEMO_* in .env only on a preview server):
@@ -16,7 +16,7 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call([ModuleSeeder::class, PlanSeeder::class, DemoInboxSeeder::class]);
+        $this->call([ModuleSeeder::class, DemoInboxSeeder::class]);
         self::applyPreviewDefaults();
     }
 

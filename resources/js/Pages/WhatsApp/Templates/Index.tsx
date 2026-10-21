@@ -758,10 +758,7 @@ function TemplateBuilderDrawer({
                 </div>
               )}
               {data.buttons.map((button, index) => (
-                <div
-                  key={index}
-                  className="rounded-btn bg-gray-50 p-2 dark:bg-ui-dark-surface-2"
-                >
+                <div key={index} className="rounded-btn bg-gray-50 p-2 dark:bg-ui-dark-surface-2">
                   <div className="flex items-center gap-2">
                     <input
                       value={button.text}
@@ -1154,7 +1151,10 @@ export default function TemplatesIndex({
       buttons: preset.buttons || [],
       has_buttons: Boolean(preset.buttons?.length),
       variable_count: variableNumbersFromText(preset.body_text).length,
-      connection: { id: connections[0]?.id || 0, name: connections[0]?.name || `${brandName()} Business` },
+      connection: {
+        id: connections[0]?.id || 0,
+        name: connections[0]?.name || `${brandName()} Business`,
+      },
       last_synced_at: null,
     });
     setLibraryOpen(false);
@@ -1490,9 +1490,7 @@ export default function TemplatesIndex({
                 <div className="rounded-card border border-gray-100 bg-gray-50/80 p-4 dark:border-ui-dark-border dark:bg-ui-dark-surface-2/70">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-ui-text dark:text-ui-dark-text">
-                        Summary
-                      </p>
+                      <p className="font-semibold text-ui-text dark:text-ui-dark-text">Summary</p>
                       <p className="mt-1 text-ui-text-muted dark:text-ui-dark-text-muted">
                         {sync_report.total} checked, {sync_report.created} new,{' '}
                         {sync_report.updated} updated, {sync_report.errors_count} problems.

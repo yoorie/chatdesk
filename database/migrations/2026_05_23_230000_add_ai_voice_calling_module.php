@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Module;
-use App\Models\Plan;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -19,21 +18,6 @@ return new class extends Migration
                 'is_enabled' => true,
             ]
         );
-
-        Plan::query()
-            ->where(function ($query) {
-                $query->where('key', 'enterprise')
-                    ->orWhereJsonContains('modules', 'ai');
-            })
-            ->get()
-            ->each(function (Plan $plan) {
-                $modules = $plan->modules ?? [];
-
-                if (! in_array('ai.voice', $modules, true)) {
-                    $modules[] = 'ai.voice';
-                    $plan->forceFill(['modules' => array_values($modules)])->save();
-                }
-            });
 
         if (! Schema::hasTable('ai_voice_calls')) {
             Schema::create('ai_voice_calls', function (Blueprint $table) {
@@ -62,18 +46,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('ai_voice_calls');
-
-        Plan::query()
-            ->whereJsonContains('modules', 'ai.voice')
-            ->get()
-            ->each(function (Plan $plan) {
-                $plan->forceFill([
-                    'modules' => array_values(array_filter(
-                        $plan->modules ?? [],
-                        fn ($module) => $module !== 'ai.voice'
-                    )),
-                ])->save();
-            });
 
         Module::where('key', 'ai.voice')->delete();
     }

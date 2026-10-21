@@ -15,12 +15,11 @@ class RouteSmokeTest extends TestCase
         parent::setUp();
 
         $this->artisan('db:seed', ['--class' => 'ModuleSeeder']);
-        $this->artisan('db:seed', ['--class' => 'PlanSeeder']);
     }
 
     public function test_core_user_pages_render_for_workspace_owner(): void
     {
-        $account = $this->createAccountWithPlan('self-hosted');
+        $account = $this->createAccount();
         $this->actingAsAccountOwner($account);
         WhatsAppConnection::factory()->create([
             'account_id' => $account->id,

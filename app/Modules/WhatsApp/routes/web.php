@@ -58,8 +58,6 @@ Route::middleware(['module.entitled:whatsapp.cloud'])->group(function () {
     Route::post('/conversations/{conversation}/update', [ConversationController::class, 'updateMeta'])->name('whatsapp.conversations.update');
     Route::post('/conversations/{conversation}/automation/stop', [ConversationController::class, 'stopAutomation'])->name('whatsapp.conversations.automation.stop');
     Route::post('/conversations/{conversation}/bot/toggle', [ConversationController::class, 'toggleBot'])->name('whatsapp.conversations.bot.toggle');
-    Route::post('/conversations/{conversation}/ai-suggest', [ConversationController::class, 'aiSuggest'])->name('whatsapp.conversations.ai-suggest');
-    Route::post('/conversations/{conversation}/ai-feedback', [ConversationController::class, 'aiFeedback'])->name('whatsapp.conversations.ai-feedback');
     Route::delete('/conversations/{conversation}', [ConversationController::class, 'destroy'])->name('whatsapp.conversations.destroy');
 
     // Lists (requires whatsapp.cloud entitlement)

@@ -2,7 +2,6 @@
 
 namespace App\Modules\WhatsApp\Http\Controllers;
 
-use App\Core\Billing\EntitlementService;
 use App\Http\Controllers\Controller;
 use App\Models\PlatformSetting;
 use App\Modules\WhatsApp\Models\WhatsAppConnection;
@@ -21,7 +20,6 @@ class ConnectionController extends Controller
 {
     public function __construct(
         protected ConnectionService $connectionService,
-        protected EntitlementService $entitlementService,
         protected MetaGraphService $metaGraphService
     ) {}
 
@@ -91,7 +89,7 @@ class ConnectionController extends Controller
             'account' => $account,
             'connections' => $connections,
             'canCreate' => Gate::allows('create', WhatsAppConnection::class)
-                && $this->entitlementService->canCreateConnection($account),
+                && true,
             'centralWebhook' => [
                 'url' => route('webhooks.whatsapp.central.receive'),
                 'verify_token' => WebhookController::centralVerifyToken(),
