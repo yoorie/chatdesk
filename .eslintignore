@@ -1,0 +1,6 @@
+node_modules/
+vendor/
+public/build/
+bootstrap/ssr/
+OvoWPP/
+UI/

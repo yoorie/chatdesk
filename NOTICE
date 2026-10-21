@@ -1,0 +1,17 @@
+ChatDesk – open-source edition
+Copyright (C) 2026 Yoorie (https://yoorie.com)
+
+This program is free software: you can redistribute it and/or modify it under the terms of the
+GNU Affero General Public License as published by the Free Software Foundation, either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+Affero General Public License for more details. You should have received a copy of it in the
+LICENSE file.
+
+Commercial licences, hosted plans and paid setup: hello@yoorie.com / https://yoorie.com
+
+WhatsApp and Meta are trademarks of Meta Platforms, Inc. This project is not affiliated with Meta.
+Third-party components keep their own licences (see composer.json, package.json and
+public/images/integrations/SIMPLE-ICONS-LICENSE.md).

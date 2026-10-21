@@ -1,0 +1,32 @@
+# Shared hosting (cPanel): upload the whole package into your domain folder (e.g. public_html).
+# Every request is internally routed into /public, so app code, .env, storage and vendor are
+# never served. Better: if your host allows it, set the domain's Document Root to /public.
+Options -Indexes -MultiViews
+ServerSignature Off
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Pass Authorization header to PHP
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Force HTTPS: uncomment once SSL is active (cPanel > SSL/TLS Status / AutoSSL)
+    # RewriteCond %{HTTPS} !=on
+    # RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Hidden files (.env, .git ...) are never served
+    RewriteRule ^\.well-known/acme-challenge/ - [L]
+    RewriteRule (^|/)\. - [F,L]
+
+    # Direct /public/... URLs: block everything outside public/ (no ../ tricks)
+    RewriteRule ^public/ - [L]
+
+    # Everything else (including /app/..., /storage/...) is an app URL inside public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>

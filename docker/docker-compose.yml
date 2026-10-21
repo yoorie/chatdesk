@@ -1,0 +1,30 @@
+# Optional: docker compose --env-file .env.docker up -d --build
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports: ["${APP_PORT:-8080}:80"]
+    volumes:
+      - storage:/var/www/html/storage
+    depends_on: [db]
+  scheduler:
+    build: .
+    restart: unless-stopped
+    command: ["sh", "-c", "while true; do php artisan schedule:run --no-interaction || true; sleep 60; done"]
+    user: www-data
+    volumes:
+      - storage:/var/www/html/storage
+    depends_on: [app, db]
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE:-whatsapp_crm}
+      MARIADB_USER: ${DB_USERNAME:-crm}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD}
+    volumes:
+      - db:/var/lib/mysql
+volumes:
+  storage:
+  db:

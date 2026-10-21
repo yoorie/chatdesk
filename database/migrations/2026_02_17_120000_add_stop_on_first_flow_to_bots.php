@@ -1,0 +1,22 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('bots', function (Blueprint $table) {
+            $table->boolean('stop_on_first_flow')->default(true)->after('applies_to');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('bots', function (Blueprint $table) {
+            $table->dropColumn('stop_on_first_flow');
+        });
+    }
+};
