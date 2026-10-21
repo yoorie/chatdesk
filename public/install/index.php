@@ -159,6 +159,7 @@ $cron = '* * * * * cd '.$root.' && php artisan schedule:run >> /dev/null 2>&1';
 ?><!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Install · <?= h($cfg['product_name']) ?></title>
+<link rel="icon" href="../favicon.ico"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <style>
 :root{--g:#047857;--b:#e5e7eb;--t:#111827;--m:#6b7280}
 *{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f3f4f6;color:var(--t)}
@@ -178,7 +179,7 @@ ul.chk{list-style:none;padding:0;margin:0}ul.chk li{display:flex;justify-content
 code,pre{background:#f3f4f6;border-radius:6px;padding:2px 6px;font-size:13px;overflow-x:auto;word-break:break-all;white-space:pre-wrap}
 .hint{color:var(--m);font-size:13px;margin:4px 0 0}.tip{cursor:help;color:var(--m)}
 .foot{color:var(--m);font-size:13px;text-align:center;margin:14px 0 0}.foot a{color:inherit}
-</style></head><body><main class="wrap"><div class="card">
+</style></head><body><main class="wrap"><p style="text-align:center;margin:0 0 16px"><img src="../images/brand/logo.svg" alt="ChatDesk" width="148" height="40"></p><div class="card">
 <h1>Install <?= h($cfg['product_name']) ?></h1><p class="sub">A few quick steps. No SSH needed.</p>
 <?php if ($step !== 'locked'): ?><ol class="steps" aria-label="Progress"><?php foreach ($steps as $k => $l): ?><li class="<?= $k === $step ? 'on' : '' ?>"<?= $k === $step ? ' aria-current="step"' : '' ?>><?= h($l) ?></li><?php endforeach ?></ol><?php endif ?>
 <?php foreach ($errors as $e): ?><div class="err" role="alert"><?= h($e) ?></div><?php endforeach ?>

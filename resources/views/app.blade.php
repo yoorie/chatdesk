@@ -39,6 +39,9 @@
 
         <!-- Favicon (will be overridden by BrandingWrapper if custom favicon is set) -->
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+        <link rel="icon" type="image/svg+xml" href="{{ asset('images/brand/icon.svg') }}">
+        <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
         <link rel="manifest" href="{{ asset('manifest.json') }}">
         <meta name="app-base" content="{{ rtrim(request()->getBasePath(), '/') }}">
         <meta name="theme-color" content="#047857">

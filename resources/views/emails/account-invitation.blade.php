@@ -11,11 +11,12 @@
     <title>Account Invitation</title>
 </head>
 <body style="font-family: Arial, sans-serif; color: #111827;">
+    <p style="margin:0 0 20px;"><img src="{{ url('/images/brand/logo-dark.png') }}" alt="{{ brand_name() }}" width="148" height="40" style="display:block;border:0;"></p>
     <h2>You have been invited to join {{ $accountName }}</h2>
     <p>{{ $inviterName }} invited you to join the account.</p>
     <p>Click the button below to accept the invite and create your account:</p>
     <p>
-        <a href="{{ $inviteUrl }}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
+        <a href="{{ $inviteUrl }}" style="display:inline-block;padding:10px 16px;background:#047857;color:#fff;text-decoration:none;border-radius:6px;">
             Accept Invitation
         </a>
     </p>

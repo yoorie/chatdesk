@@ -1,13 +1,14 @@
 <div align="center">
 
-<a href="https://yoorie.com">
+<a href="https://chatdesk.yoorie.com">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/yoorie-logo-white.png">
-    <img src="docs/assets/yoorie-logo.png" alt="Yoorie" width="220">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/chatdesk-logo-white.png">
+    <img src="docs/assets/chatdesk-logo.png" alt="ChatDesk" width="300">
   </picture>
 </a>
 
-# ChatDesk
+<sub>by</sub>&nbsp;<a href="https://yoorie.com"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/yoorie-logo-white.png"><img src="docs/assets/yoorie-logo.png" alt="Yoorie" height="22" align="absmiddle"></picture></a>
+
 
 **Self-hosted WhatsApp Cloud API inbox for your business. Open source, built with Laravel.**
 
